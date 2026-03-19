@@ -4,6 +4,6 @@
 
 ## 각 자료 목록
 
-- [FIDO2](fido2/index.md)
-- [DID](did/index.md)
-- [ZKp](zkp/index.md)
+- [FIDO2](docs/fido2/index.md)
+- [DID](docs/did/index.md)
+- [ZKp](docs/zkp/index.md)
