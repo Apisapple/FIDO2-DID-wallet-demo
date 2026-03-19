@@ -6,4 +6,4 @@
 
 - [FIDO2](docs/fido2/index.md)
 - [DID](docs/did/index.md)
-- [ZKp](docs/zkp/index.md)
+- [ZKP](docs/zkp/index.md)
