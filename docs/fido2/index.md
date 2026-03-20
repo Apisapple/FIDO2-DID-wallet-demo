@@ -23,6 +23,6 @@ UAF : 패스워드가 없는 인증을 제공하는 프로토콜
 
 U2F : 기존 패스워드 기반 인증에 보안 요소를 추가한 프로토콜
 
-## WebAuthn
+## [WebAuthn](./webauthn.md)
 
 Web Authentication Woriking Group에서 개발한 웹 인증 표준으로 웹, 네이티브 애플리케이션에서 사용자의 인증 정보를 안전하게 관리하고 패스워드 없는 인증을 구현할 수 있도록 지원. iOS와 Android 같은 플랫폼에서 제공하는 생체 인증 API를 사용해 WebAuthn을 따르는 인증을 구현할 수 있음
