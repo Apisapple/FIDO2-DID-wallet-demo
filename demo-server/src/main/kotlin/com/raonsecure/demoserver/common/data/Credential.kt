@@ -1,4 +1,4 @@
-package com.raonsecure.demoserver.data
+package com.raonsecure.demoserver.common.data
 
 data class Credential(
     val id: String,

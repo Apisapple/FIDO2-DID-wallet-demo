@@ -1,4 +1,4 @@
-package com.raonsecure.demoserver.data
+package com.raonsecure.demoserver.common.data
 
 open class PublicKeyCredentialEntity(
     var name: String,
