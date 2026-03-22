@@ -1,4 +1,4 @@
-package pilot.project.common.data
+package com.raonsecure.demoserver.data
 
 class PublicKeyCredentialUserEntity(
     var id: ByteArray,

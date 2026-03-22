@@ -1,4 +1,4 @@
-package pilot.project.common.data
+package com.raonsecure.demoserver.data
 
 enum class PublicKeyCredentialType(
     val value: String,
