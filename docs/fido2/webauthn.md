@@ -67,4 +67,3 @@ sequenceDiagram
     Relying Party (API server) -->> User Agent (Client): 서명 검증 및 사용자 인증
     User Agent (Client) ->> User: 인증 성공
 ```
-
