@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.demo_library"
+    namespace = "com.example.demo.library"
     compileSdk {
         version = release(36) { minorApiLevel = 1 }
     }
