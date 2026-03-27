@@ -60,8 +60,6 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
     }
 
     testOptions {
@@ -132,6 +130,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
 
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 kotlin {
