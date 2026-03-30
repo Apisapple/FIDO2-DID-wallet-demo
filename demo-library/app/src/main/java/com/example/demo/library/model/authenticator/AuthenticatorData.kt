@@ -1,8 +1,9 @@
-package com.example.demo.library.model
+package com.example.demo.library.model.authenticator
 
 import co.nstant.`in`.cbor.builder.AbstractBuilder
 import co.nstant.`in`.cbor.builder.MapBuilder
 import com.example.demo.library.exceptions.WebAuthnException
+import com.example.demo.library.model.CborSerializable
 import java.nio.ByteBuffer
 import java.security.interfaces.ECPublicKey
 

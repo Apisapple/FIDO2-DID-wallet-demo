@@ -1,15 +1,14 @@
-package com.example.demo.library.model
+package com.example.demo.library.model.attestation
 
 import co.nstant.`in`.cbor.builder.AbstractBuilder
 import co.nstant.`in`.cbor.builder.MapBuilder
+import com.example.demo.library.model.CborSerializable
 
 data class AttestationObject(
     val authData: ByteArray,
     val fmt: String,
     val attestationStatement: AttestationStatement,
-) :
-    CborSerializable {
-
+) : CborSerializable {
     override fun <T : AbstractBuilder<*>?> toCBOR(builder: MapBuilder<T>): T {
         builder.put("authData", authData)
         builder.put("fmt", fmt)

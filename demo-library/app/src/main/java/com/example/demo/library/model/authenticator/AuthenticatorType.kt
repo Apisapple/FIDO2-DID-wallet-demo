@@ -1,5 +1,7 @@
-package com.example.demo.library.model
+package com.example.demo.library.model.authenticator
 
+import com.example.demo.library.model.AuthenticationMethod
+import com.example.demo.library.model.attestation.AttestationStatementFormat
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID

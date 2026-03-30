@@ -1,4 +1,4 @@
-package com.example.demo.library.model
+package com.example.demo.library.model.authenticator
 
 data class AuthenticatorMakeCredentialResult(
     val credentialId: ByteArray,

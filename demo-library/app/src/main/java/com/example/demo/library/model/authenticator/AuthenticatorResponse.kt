@@ -1,4 +1,4 @@
-package com.example.demo.library.model
+package com.example.demo.library.model.authenticator
 
 interface AuthenticatorResponse {
     val clientDataJson: ByteArray
