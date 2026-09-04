@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 class MetadataTocEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private val id: Long = 0L
+    private var id: Long = 0L
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private var metadataSource: String = ""

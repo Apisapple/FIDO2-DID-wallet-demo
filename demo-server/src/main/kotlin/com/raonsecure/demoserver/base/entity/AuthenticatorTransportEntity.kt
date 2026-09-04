@@ -15,7 +15,7 @@ import jakarta.persistence.Table
 class AuthenticatorTransportEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private val id: Long? = null
+    private var id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_key_id", nullable = false)
