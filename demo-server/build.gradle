@@ -30,6 +30,7 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
     implementation 'tools.jackson.module:jackson-module-kotlin'
+    implementation 'com.webauthn4j:webauthn4j-core:0.31.10.RELEASE'
     if (System.getProperty('os.arch').toLowerCase().contains('aarch64')) {
         implementation('com.github.codemonstur:embedded-redis:1.4.3')
     } else {
