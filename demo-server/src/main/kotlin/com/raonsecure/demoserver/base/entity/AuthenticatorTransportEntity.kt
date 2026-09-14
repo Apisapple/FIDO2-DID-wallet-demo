@@ -27,4 +27,8 @@ class AuthenticatorTransportEntity() {
     constructor(transport: String) : this() {
         this.transport = transport
     }
+
+    fun link(userKey: UserKeyEntity) {
+        this.userKeyEntity = userKey
+    }
 }
