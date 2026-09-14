@@ -28,3 +28,9 @@ spring:
 
 server:
   port: 8080
+
+webauthn:
+  rp:
+    id: localhost
+    name: FIDO2 Demo Server
+    origin: http://localhost:8080
