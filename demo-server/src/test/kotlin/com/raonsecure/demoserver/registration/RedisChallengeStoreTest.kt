@@ -1,5 +1,6 @@
 package com.raonsecure.demoserver.registration
 
+import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationContext
 import com.raonsecure.demoserver.registration.challenge.PendingRegistrationContext
 import com.raonsecure.demoserver.registration.challenge.RedisChallengeStore
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -44,6 +45,28 @@ class RedisChallengeStoreTest {
     @Test
     fun `unknown challenge returns null`() {
         val result = challengeStore.consume("nonexistent-challenge")
+        assertNull(result)
+    }
+
+    @Test
+    fun `saved authentication challenge is retrievable and single-use`() {
+        val challenge = "auth-challenge-${System.nanoTime()}"
+        val ctx = PendingAuthenticationContext("authUser", challenge, listOf("cred1", "cred2"))
+
+        challengeStore.saveAuthentication(challenge, ctx, Duration.ofSeconds(30))
+        val result = challengeStore.consumeAuthentication(challenge)
+
+        assertNotNull(result)
+        assertEquals("authUser", result!!.username)
+        assertEquals(listOf("cred1", "cred2"), result.credentialIds)
+
+        val second = challengeStore.consumeAuthentication(challenge)
+        assertNull(second)
+    }
+
+    @Test
+    fun `unknown authentication challenge returns null`() {
+        val result = challengeStore.consumeAuthentication("nonexistent-auth-challenge")
         assertNull(result)
     }
 }
