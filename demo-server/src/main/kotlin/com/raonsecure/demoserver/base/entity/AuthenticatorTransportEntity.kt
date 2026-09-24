@@ -15,14 +15,14 @@ import jakarta.persistence.Table
 class AuthenticatorTransportEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private var id: Long? = null
+    var id: Long? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_key_id", nullable = false)
-    private lateinit var userKeyEntity: UserKeyEntity
+    lateinit var userKeyEntity: UserKeyEntity
 
     @Column(nullable = false)
-    private var transport: String = ""
+    var transport: String = ""
 
     constructor(transport: String) : this() {
         this.transport = transport
