@@ -1,5 +1,6 @@
 package com.raonsecure.demoserver.registration.challenge
 
+import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationContext
 import tools.jackson.databind.ObjectMapper
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
@@ -21,5 +22,17 @@ class RedisChallengeStore(
         val key = "reg:challenge:$challenge"
         val value = redisTemplate.opsForValue().getAndDelete(key) ?: return null
         return objectMapper.readValue(value, PendingRegistrationContext::class.java)
+    }
+
+    override fun saveAuthentication(challenge: String, context: PendingAuthenticationContext, ttl: Duration) {
+        val key = "auth:challenge:$challenge"
+        val value = objectMapper.writeValueAsString(context)
+        redisTemplate.opsForValue().set(key, value, ttl)
+    }
+
+    override fun consumeAuthentication(challenge: String): PendingAuthenticationContext? {
+        val key = "auth:challenge:$challenge"
+        val value = redisTemplate.opsForValue().getAndDelete(key) ?: return null
+        return objectMapper.readValue(value, PendingAuthenticationContext::class.java)
     }
 }
