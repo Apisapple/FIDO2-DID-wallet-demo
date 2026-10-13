@@ -12,7 +12,7 @@ import jakarta.persistence.Table
 class MetadataYubicoEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private val id: Long? = null
+    private var id: Long? = null
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private var content: String? = null
