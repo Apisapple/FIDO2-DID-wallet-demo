@@ -33,4 +33,8 @@ webauthn:
   rp:
     id: localhost
     name: FIDO2 Demo Server
-    origin: http://localhost:8080
+    # Accepted client origins. Add the Android client's apk-key-hash origin here once the
+    # wallet's signing certificate is known; the placeholder below is not a real key hash.
+    origins:
+      - http://localhost:8080
+      - android:apk-key-hash:pNiP5iKyQ8JwgGOaKA1zGPUPJIS-0H1xKCQcfIoGLck

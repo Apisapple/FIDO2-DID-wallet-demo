@@ -27,7 +27,7 @@ class RegistrationServiceTest {
     private val rpProperties = WebAuthnRpProperties(
         id = "localhost",
         name = "Demo",
-        origin = "http://localhost:8080",
+        origins = setOf("http://localhost:8080"),
     )
     private val rpRepository: RpRepository = mock()
     private val userKeyRepository: UserKeyRepository = mock()

@@ -113,7 +113,7 @@ class RegistrationService(
             ?: throw ChallengeNotFoundException(challengeStr)
 
         val serverProperty = ServerProperty.builder()
-            .origin(Origin.create(rpProperties.origin))
+            .origins(rpProperties.origins.map { Origin.create(it) }.toSet())
             .rpId(rpProperties.id)
             .challenge(DefaultChallenge(Base64.getUrlDecoder().decode(pendingCtx.challenge)))
             .build()

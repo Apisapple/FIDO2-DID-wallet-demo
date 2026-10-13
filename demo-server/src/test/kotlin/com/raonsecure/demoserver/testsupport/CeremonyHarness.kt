@@ -24,19 +24,20 @@ import java.util.Optional
  * same code the controllers call.
  */
 class CeremonyHarness(
-    val origin: String = CeremonyFixture.DEFAULT_ORIGIN,
+    val origins: Set<String> = setOf(CeremonyFixture.DEFAULT_ORIGIN),
     val rpId: String = CeremonyFixture.DEFAULT_RP_ID,
+    val fixtureOrigin: String = CeremonyFixture.DEFAULT_ORIGIN,
 ) {
     val credentials: MutableList<UserKeyEntity> = mutableListOf()
     val challengeStore = InMemoryChallengeStore()
-    val fixture = CeremonyFixture(origin = origin, rpId = rpId)
+    val fixture = CeremonyFixture(origin = fixtureOrigin, rpId = rpId)
 
     private val rp = RpEntity(id = rpId, name = "Fixture RP")
     private val rpRepository: RpRepository = mock<RpRepository>().also {
         whenever(it.findById(rpId)).thenReturn(Optional.of(rp))
     }
     private val userKeyRepository = fakeUserKeyRepository(credentials)
-    private val rpProperties = WebAuthnRpProperties(id = rpId, name = "Fixture RP", origin = origin)
+    private val rpProperties = WebAuthnRpProperties(id = rpId, name = "Fixture RP", origins = origins)
     private val webAuthnManager: WebAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
 
     val registrationService = RegistrationService(
