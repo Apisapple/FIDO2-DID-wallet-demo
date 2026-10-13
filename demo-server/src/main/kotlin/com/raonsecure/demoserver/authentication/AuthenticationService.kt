@@ -4,6 +4,8 @@ import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationC
 import com.raonsecure.demoserver.authentication.exception.AuthenticationChallengeNotFoundException
 import com.raonsecure.demoserver.authentication.exception.AuthenticationVerificationException
 import com.raonsecure.demoserver.authentication.exception.CredentialNotFoundException
+import com.raonsecure.demoserver.authentication.exception.SignCounterRegressionException
+import com.raonsecure.demoserver.authentication.exception.UserHandleMismatchException
 import com.raonsecure.demoserver.base.entity.UserKeyEntity
 import com.raonsecure.demoserver.base.repository.UserKeyRepository
 import com.raonsecure.demoserver.common.data.AuthenticationDataResponse
@@ -26,6 +28,7 @@ import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.server.ServerProperty
+import com.webauthn4j.verifier.exception.MaliciousCounterValueException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.KeyFactory
@@ -69,10 +72,16 @@ class AuthenticationService(
         val challengeBytes = ByteArray(32).also { random.nextBytes(it) }
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeBytes)
 
+        // One value drives both the advertised requirement and the stored policy, so
+        // verification cannot enforce something different from what the client was told.
+        val userVerification = request.userVerification ?: UserVerificationRequirement.PREFERRED.value
+
         val context = PendingAuthenticationContext(
             username = username,
             challenge = challenge,
             credentialIds = matchingCredentials.map { it.credentialId },
+            userVerification = userVerification,
+            usernameProvided = !username.isNullOrEmpty(),
         )
         challengeStore.saveAuthentication(challenge, context, challengeTtl)
 
@@ -81,7 +90,7 @@ class AuthenticationService(
             rpId = rpProperties.id,
             allowCredentials = allowCredentials,
             timeout = 60_000L,
-            userVerification = request.userVerification ?: UserVerificationRequirement.PREFERRED.value,
+            userVerification = userVerification,
         )
     }
 
@@ -123,6 +132,20 @@ class AuthenticationService(
             throw AuthenticationVerificationException("Credential ID $credentialIdRaw is not in allowed credentials")
         }
 
+        // Bind the asserted user handle to the credential. webauthn4j cannot do this for us: the
+        // CredentialRecordImpl built below carries no user entity to compare against.
+        val assertedUserHandle = result.response.userHandle
+        if (assertedUserHandle != null) {
+            if (assertedUserHandle != userKey.userId) {
+                throw UserHandleMismatchException(credentialIdRaw)
+            }
+        } else if (!pendingCtx.usernameProvided) {
+            // Nothing else identifies the user in a usernameless ceremony.
+            throw AuthenticationVerificationException(
+                "Assertion for a usernameless ceremony must carry a userHandle",
+            )
+        }
+
         val coseKey = restoreCoseKey(userKey)
         val aaguid = if (userKey.aaguid.isNotBlank()) AAGUID(userKey.aaguid) else AAGUID.ZERO
         val attestedCredentialData = AttestedCredentialData(aaguid, credentialIdBytes, coseKey)
@@ -145,16 +168,23 @@ class AuthenticationService(
             .challenge(DefaultChallenge(Base64.getUrlDecoder().decode(pendingCtx.challenge)))
             .build()
 
+        // User presence is always required; user verification is required only when the options
+        // advertised it. Parameter order is (serverProperty, credentialRecord, allowCredentials,
+        // userVerificationRequired, userPresenceRequired).
         val authParameters = AuthenticationParameters(
             serverProperty,
             credentialRecord,
             null,
-            false,
+            pendingCtx.userVerification == UserVerificationRequirement.REQUIRED.value,
             true,
         )
 
         val authData = try {
             webAuthnManager.verify(authRequest, authParameters)
+        } catch (e: MaliciousCounterValueException) {
+            // Distinguishable from other verification failures: a counter that did not advance
+            // suggests a cloned or replayed authenticator rather than a malformed assertion.
+            throw SignCounterRegressionException(e.storedCounter, e.presentedCounter)
         } catch (e: Exception) {
             throw AuthenticationVerificationException("Assertion verification failed: ${e.message}", e)
         }

@@ -4,6 +4,7 @@ import com.raonsecure.demoserver.authentication.exception.AuthenticationChalleng
 import com.raonsecure.demoserver.authentication.exception.AuthenticationVerificationException
 import com.raonsecure.demoserver.authentication.exception.CredentialNotFoundException
 import com.raonsecure.demoserver.authentication.exception.SignCounterRegressionException
+import com.raonsecure.demoserver.authentication.exception.UserHandleMismatchException
 import com.raonsecure.demoserver.common.data.WebAuthnVerificationResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -22,6 +23,10 @@ class AuthenticationExceptionHandler {
 
     @ExceptionHandler(SignCounterRegressionException::class)
     fun handleSignCounterRegression(e: SignCounterRegressionException): ResponseEntity<WebAuthnVerificationResponse> =
+        ResponseEntity.ok(WebAuthnVerificationResponse(success = false, message = e.message))
+
+    @ExceptionHandler(UserHandleMismatchException::class)
+    fun handleUserHandleMismatch(e: UserHandleMismatchException): ResponseEntity<WebAuthnVerificationResponse> =
         ResponseEntity.ok(WebAuthnVerificationResponse(success = false, message = e.message))
 
     @ExceptionHandler(AuthenticationVerificationException::class)

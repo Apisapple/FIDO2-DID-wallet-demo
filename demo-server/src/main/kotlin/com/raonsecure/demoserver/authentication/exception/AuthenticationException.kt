@@ -13,3 +13,6 @@ class SignCounterRegressionException(storedCount: Long, receivedCount: Long) :
 
 class AuthenticationVerificationException(message: String, cause: Throwable? = null) :
     AuthenticationException(message, cause)
+
+class UserHandleMismatchException(credentialId: String) :
+    AuthenticationException("Asserted userHandle does not match the credential: $credentialId")
