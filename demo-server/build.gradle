@@ -5,6 +5,12 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
+// webauthn4j 0.31.10 is compiled against Jackson 3.2.x; Spring Boot 4.0.3 manages 3.0.4,
+// whose ObjectMapper lacks treeToValue(JsonNode, Class). Override both Jackson BOMs together:
+// databind 3.2.1 needs jackson-annotations 2.22 for JsonSerializeAs.
+ext['jackson-bom.version'] = '3.2.1'
+ext['jackson-2-bom.version'] = '2.22.3'
+
 group = 'com.raonsecure'
 version = '0.0.1-DEMO'
 description = 'demo-server'
@@ -28,8 +34,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     runtimeOnly 'com.h2database:h2'
+    // Spring Boot 4 moved the H2 console autoconfiguration into its own module; without it
+    // spring.h2.console.* is read but the console is not served.
+    runtimeOnly 'org.springframework.boot:spring-boot-h2console'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
     implementation 'tools.jackson.module:jackson-module-kotlin'
+    implementation 'com.webauthn4j:webauthn4j-core:0.31.10.RELEASE'
     if (System.getProperty('os.arch').toLowerCase().contains('aarch64')) {
         implementation('com.github.codemonstur:embedded-redis:1.4.3')
     } else {
@@ -40,6 +50,8 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testImplementation 'com.webauthn4j:webauthn4j-test:0.31.10.RELEASE'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.4.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

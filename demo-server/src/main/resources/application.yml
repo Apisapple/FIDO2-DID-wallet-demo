@@ -28,3 +28,19 @@ spring:
 
 server:
   port: 8080
+
+webauthn:
+  rp:
+    id: localhost
+    name: FIDO2 Demo Server
+    # Accepted client origins. Add the Android client's apk-key-hash origin here once the
+    # wallet's signing certificate is known; the placeholder below is not a real key hash.
+    origins:
+      - http://localhost:8080
+      - android:apk-key-hash:pNiP5iKyQ8JwgGOaKA1zGPUPJIS-0H1xKCQcfIoGLck
+    # Android applications published at /.well-known/assetlinks.json. Fill in the wallet's real
+    # package name and signing certificate fingerprints; the apk-key-hash origin above must match.
+    # android-apps:
+    #   - package-name: com.raonsecure.wallet
+    #     sha256-cert-fingerprints:
+    #       - "AA:BB:CC:..."

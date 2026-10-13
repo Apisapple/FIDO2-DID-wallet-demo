@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIDO2 Demo</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f7f9;
+    --border: #d8dce3;
+    --text: #1a1d23;
+    --muted: #5c6370;
+    --accent: #2563eb;
+    --ok: #15803d;
+    --err: #b91c1c;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15181d;
+      --surface: #1e222a;
+      --border: #333a45;
+      --text: #e8eaed;
+      --muted: #9aa3b0;
+      --accent: #60a5fa;
+      --ok: #4ade80;
+      --err: #f87171;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181d; --surface: #1e222a; --border: #333a45;
+    --text: #e8eaed; --muted: #9aa3b0; --accent: #60a5fa;
+    --ok: #4ade80; --err: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 16px; background: var(--bg); color: var(--text);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 28px; font-size: .9rem; }
+  fieldset {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; margin: 0 0 18px; background: var(--surface);
+  }
+  legend { padding: 0 8px; font-weight: 600; font-size: .9rem; }
+  label { display: block; font-size: .85rem; color: var(--muted); margin: 0 0 6px; }
+  input, select {
+    width: 100%; padding: 9px 11px; margin: 0 0 14px;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--bg); color: var(--text); font-size: .95rem;
+  }
+  input:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 140px; }
+  button {
+    padding: 10px 16px; border: 1px solid var(--accent); border-radius: 7px;
+    background: var(--accent); color: #fff; font-size: .95rem; font-weight: 500;
+    cursor: pointer; min-height: 42px;
+  }
+  button.secondary { background: transparent; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  #status {
+    padding: 11px 13px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface); font-size: .9rem; margin: 0 0 14px; min-height: 44px;
+  }
+  #status.ok { border-color: var(--ok); color: var(--ok); }
+  #status.err { border-color: var(--err); color: var(--err); }
+  pre {
+    font-family: var(--mono); font-size: .78rem; line-height: 1.5;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 7px;
+    padding: 13px; overflow-x: auto; margin: 0; max-height: 340px; white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .hint { font-size: .8rem; color: var(--muted); margin: 10px 0 0; }
+  code { font-family: var(--mono); font-size: .85em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>FIDO2 Demo</h1>
+  <p class="sub">
+    Register a passkey, then authenticate with it. Must be served from the relying
+    party's own origin — opening this file directly will fail the origin check.
+  </p>
+
+  <div id="status">Ready.</div>
+
+  <fieldset>
+    <legend>Register</legend>
+    <label for="reg-username">Username</label>
+    <input id="reg-username" value="demo" autocomplete="username">
+
+    <div class="row">
+      <div>
+        <label for="reg-uv">User verification</label>
+        <select id="reg-uv">
+          <option value="preferred" selected>preferred</option>
+          <option value="required">required</option>
+          <option value="discouraged">discouraged</option>
+        </select>
+      </div>
+      <div>
+        <label for="reg-attestation">Attestation</label>
+        <select id="reg-attestation">
+          <option value="none" selected>none</option>
+          <option value="direct">direct</option>
+          <option value="indirect">indirect</option>
+        </select>
+      </div>
+      <div>
+        <label for="reg-rk">Resident key</label>
+        <select id="reg-rk">
+          <option value="" selected>(unset)</option>
+          <option value="preferred">preferred</option>
+          <option value="required">required</option>
+          <option value="discouraged">discouraged</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="btn-register">Register passkey</button>
+    <p class="hint">
+      <code>required</code> user verification prompts for Touch ID, Windows Hello or a PIN.
+      Choose <code>direct</code> attestation to see a type other than <code>none</code> stored.
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Authenticate</legend>
+    <label for="auth-username">Username (leave empty for a discoverable credential)</label>
+    <input id="auth-username" value="demo" autocomplete="username">
+
+    <label for="auth-uv">User verification</label>
+    <select id="auth-uv">
+      <option value="preferred" selected>preferred</option>
+      <option value="required">required</option>
+      <option value="discouraged">discouraged</option>
+    </select>
+
+    <div class="row">
+      <button id="btn-authenticate">Authenticate</button>
+      <button id="btn-authenticate-rk" class="secondary">Authenticate without username</button>
+    </div>
+    <p class="hint">
+      A usernameless ceremony requires the authenticator to return a user handle, so the
+      passkey must have been created as a resident key.
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Server exchange</legend>
+    <pre id="log">No requests yet.</pre>
+  </fieldset>
+</main>
+
+<script>
+'use strict';
+
+const statusEl = document.getElementById('status');
+const logEl = document.getElementById('log');
+const buttons = ['btn-register', 'btn-authenticate', 'btn-authenticate-rk']
+  .map((id) => document.getElementById(id));
+
+function setStatus(text, kind) {
+  statusEl.textContent = text;
+  statusEl.className = kind || '';
+}
+
+function log(label, payload) {
+  const body = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2);
+  logEl.textContent = `── ${label} ──\n${body}\n\n${logEl.textContent}`.slice(0, 20000);
+}
+
+function reset() {
+  logEl.textContent = '';
+}
+
+/** base64url (no padding) is what every field in this API uses, both directions. */
+function b64urlToBytes(value) {
+  const padded = value.replace(/-/g, '+').replace(/_/g, '/')
+    + '='.repeat((4 - (value.length % 4)) % 4);
+  const raw = atob(padded);
+  return Uint8Array.from(raw, (c) => c.charCodeAt(0));
+}
+
+function bytesToB64url(buffer) {
+  let raw = '';
+  for (const byte of new Uint8Array(buffer)) raw += String.fromCharCode(byte);
+  return btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function postJson(path, body) {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const text = await response.text();
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error(`${path} returned non-JSON (HTTP ${response.status}): ${text.slice(0, 200)}`);
+  }
+  log(`POST ${path} → HTTP ${response.status}`, parsed);
+  return parsed;
+}
+
+/**
+ * The server answers options with {status, options} and results with {success, message}.
+ * A failure can arrive as HTTP 200 with success:false, so neither envelope can be judged
+ * by status code alone.
+ */
+function optionsOrThrow(envelope) {
+  if (envelope.status !== 'ok' || !envelope.options) {
+    throw new Error(envelope.errorMessage || envelope.message || 'server rejected the options request');
+  }
+  return envelope.options;
+}
+
+function resultOrThrow(envelope) {
+  if (!envelope.success) {
+    throw new Error(envelope.message || 'verification failed');
+  }
+  return envelope;
+}
+
+function withButtonsDisabled(task) {
+  return async (...args) => {
+    buttons.forEach((b) => { b.disabled = true; });
+    try {
+      await task(...args);
+    } catch (error) {
+      // A user cancelling the platform prompt is not a server error; say so plainly.
+      const aborted = error && (error.name === 'NotAllowedError' || error.name === 'AbortError');
+      setStatus(aborted ? `Cancelled or timed out: ${error.message}` : `Failed: ${error.message}`, 'err');
+      log('ERROR', `${error.name || 'Error'}: ${error.message}`);
+    } finally {
+      buttons.forEach((b) => { b.disabled = false; });
+    }
+  };
+}
+
+async function register() {
+  reset();
+  const username = document.getElementById('reg-username').value.trim();
+  if (!username) throw new Error('username is required');
+
+  const residentKey = document.getElementById('reg-rk').value;
+  const authenticatorSelection = { userVerification: document.getElementById('reg-uv').value };
+  if (residentKey) authenticatorSelection.residentKey = residentKey;
+
+  setStatus('Requesting registration options…');
+  const options = optionsOrThrow(await postJson('/attestation/options', {
+    username,
+    displayName: username,
+    attestation: document.getElementById('reg-attestation').value,
+    authenticatorSelection,
+  }));
+
+  setStatus('Waiting for your authenticator…');
+  const credential = await navigator.credentials.create({
+    publicKey: {
+      rp: options.rp,
+      user: {
+        id: b64urlToBytes(options.user.id),
+        name: options.user.name,
+        displayName: options.user.displayName,
+      },
+      challenge: b64urlToBytes(options.challenge),
+      pubKeyCredParams: options.pubKeyCredParams,
+      timeout: options.timeout,
+      excludeCredentials: (options.excludeCredentials || []).map((descriptor) => ({
+        id: b64urlToBytes(descriptor.id),
+        type: descriptor.type,
+        transports: descriptor.transports || undefined,
+      })),
+      authenticatorSelection: options.authenticatorSelection,
+      attestation: options.attestation,
+      extensions: options.extensions || undefined,
+    },
+  });
+  if (!credential) throw new Error('the authenticator returned no credential');
+
+  setStatus('Verifying attestation…');
+  const result = resultOrThrow(await postJson('/attestation/result', {
+    id: credential.id,
+    rawId: bytesToB64url(credential.rawId),
+    type: credential.type,
+    response: {
+      clientDataJSON: bytesToB64url(credential.response.clientDataJSON),
+      attestationObject: bytesToB64url(credential.response.attestationObject),
+      transports: credential.response.getTransports
+        ? credential.response.getTransports()
+        : undefined,
+    },
+    // Carries credProps, which is how the server learns whether this is a resident key.
+    clientExtensionOutput: credential.getClientExtensionResults(),
+  }));
+
+  setStatus(`${result.message} — credential registered for "${username}".`, 'ok');
+}
+
+async function authenticate(useUsername) {
+  reset();
+  const username = useUsername ? document.getElementById('auth-username').value.trim() : '';
+
+  setStatus('Requesting authentication options…');
+  const options = optionsOrThrow(await postJson('/assertion/options', {
+    username: username || null,
+    userVerification: document.getElementById('auth-uv').value,
+  }));
+
+  setStatus('Waiting for your authenticator…');
+  const assertion = await navigator.credentials.get({
+    publicKey: {
+      challenge: b64urlToBytes(options.challenge),
+      rpId: options.rpId,
+      allowCredentials: (options.allowCredentials || []).map((descriptor) => ({
+        id: b64urlToBytes(descriptor.id),
+        type: descriptor.type,
+        transports: descriptor.transports || undefined,
+      })),
+      timeout: options.timeout,
+      userVerification: options.userVerification,
+      extensions: options.extensions || undefined,
+    },
+  });
+  if (!assertion) throw new Error('the authenticator returned no assertion');
+
+  const userHandle = assertion.response.userHandle;
+  setStatus('Verifying assertion…');
+  const result = resultOrThrow(await postJson('/assertion/result', {
+    id: assertion.id,
+    rawId: bytesToB64url(assertion.rawId),
+    type: assertion.type,
+    response: {
+      clientDataJSON: bytesToB64url(assertion.response.clientDataJSON),
+      authenticatorData: bytesToB64url(assertion.response.authenticatorData),
+      signature: bytesToB64url(assertion.response.signature),
+      // Required for a usernameless ceremony; the server binds it to the credential.
+      userHandle: userHandle && userHandle.byteLength ? bytesToB64url(userHandle) : null,
+    },
+    clientExtensionOutput: assertion.getClientExtensionResults(),
+  }));
+
+  setStatus(`${result.message}${username ? ` — as "${username}".` : ' — via a discoverable credential.'}`, 'ok');
+}
+
+document.getElementById('btn-register')
+  .addEventListener('click', withButtonsDisabled(register));
+document.getElementById('btn-authenticate')
+  .addEventListener('click', withButtonsDisabled(() => authenticate(true)));
+document.getElementById('btn-authenticate-rk')
+  .addEventListener('click', withButtonsDisabled(() => authenticate(false)));
+
+if (!window.PublicKeyCredential) {
+  setStatus('This browser does not support WebAuthn.', 'err');
+  buttons.forEach((b) => { b.disabled = true; });
+} else if (!window.isSecureContext) {
+  setStatus('WebAuthn needs a secure context — use http://localhost, not a file:// URL.', 'err');
+  buttons.forEach((b) => { b.disabled = true; });
+}
+</script>
+</body>
+</html>
