@@ -37,7 +37,12 @@ class UserKeyEntity() {
     @Column(nullable = false, length = 36)
     var aaguid: String = ""
 
-    @Column(nullable = false, length = 256)
+    /**
+     * Base64url of a credential ID, which WebAuthn allows to be up to 1023 bytes -- about 1364
+     * base64url characters. A 256-character column overflows for authenticators that pack state
+     * into the ID rather than issuing a short handle.
+     */
+    @Column(nullable = false, length = 1400)
     var credentialId: String = ""
 
     @Column(columnDefinition = "TEXT", nullable = false)
