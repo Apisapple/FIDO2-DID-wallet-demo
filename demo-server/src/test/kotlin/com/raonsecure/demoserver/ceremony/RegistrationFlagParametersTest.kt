@@ -50,7 +50,11 @@ class RegistrationFlagParametersTest {
         val challengeStore = InMemoryChallengeStore()
         val webAuthnManager: WebAuthnManager = mock()
         val service = RegistrationService(
-            WebAuthnRpProperties(id = "localhost", name = "Fixture RP"),
+            WebAuthnRpProperties(
+                id = CeremonyFixture.DEFAULT_RP_ID,
+                name = "Fixture RP",
+                origins = setOf(CeremonyFixture.DEFAULT_ORIGIN),
+            ),
             rpRepository,
             fakeUserKeyRepository(),
             challengeStore,

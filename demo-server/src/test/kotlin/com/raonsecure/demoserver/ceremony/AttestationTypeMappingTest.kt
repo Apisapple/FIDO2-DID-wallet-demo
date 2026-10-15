@@ -4,6 +4,7 @@ import com.raonsecure.demoserver.base.entity.AttestationType
 import com.raonsecure.demoserver.base.repository.RpRepository
 import com.raonsecure.demoserver.config.WebAuthnRpProperties
 import com.raonsecure.demoserver.registration.RegistrationService
+import com.raonsecure.demoserver.testsupport.CeremonyFixture
 import com.raonsecure.demoserver.testsupport.InMemoryChallengeStore
 import com.raonsecure.demoserver.testsupport.fakeUserKeyRepository
 import com.webauthn4j.WebAuthnManager
@@ -27,7 +28,11 @@ import org.mockito.kotlin.whenever
 class AttestationTypeMappingTest {
 
     private val service = RegistrationService(
-        WebAuthnRpProperties(id = "localhost", name = "Fixture RP"),
+        WebAuthnRpProperties(
+            id = CeremonyFixture.DEFAULT_RP_ID,
+            name = "Fixture RP",
+            origins = setOf(CeremonyFixture.DEFAULT_ORIGIN),
+        ),
         mock<RpRepository>(),
         fakeUserKeyRepository(),
         InMemoryChallengeStore(),

@@ -44,6 +44,7 @@ class WebAuthnRpPropertiesTest {
     fun `android apps bind when configured`() {
         runner.withPropertyValues(
             "webauthn.rp.id=localhost",
+            "webauthn.rp.name=Demo",
             "webauthn.rp.origins[0]=http://localhost:8080",
             "webauthn.rp.android-apps[0].package-name=com.raonsecure.wallet",
             "webauthn.rp.android-apps[0].sha256-cert-fingerprints[0]=AA:BB:CC",
@@ -64,6 +65,7 @@ class WebAuthnRpPropertiesTest {
     fun `android apps default to empty when absent`() {
         runner.withPropertyValues(
             "webauthn.rp.id=localhost",
+            "webauthn.rp.name=Demo",
             "webauthn.rp.origins[0]=http://localhost:8080",
         ).run { context ->
             assertTrue(context.startupFailure == null, "context should start")
@@ -91,6 +93,7 @@ class WebAuthnRpPropertiesTest {
     fun `blank relying party id fails startup`() {
         runner.withPropertyValues(
             "webauthn.rp.id=",
+            "webauthn.rp.name=Demo",
             "webauthn.rp.origins[0]=http://localhost:8080",
         ).run { context ->
             val failure = context.startupFailure
@@ -106,6 +109,7 @@ class WebAuthnRpPropertiesTest {
     fun `empty origin set fails startup`() {
         runner.withPropertyValues(
             "webauthn.rp.id=localhost",
+            "webauthn.rp.name=Demo",
             "webauthn.rp.origins=",
         ).run { context ->
             val failure = context.startupFailure
@@ -121,6 +125,7 @@ class WebAuthnRpPropertiesTest {
     fun `blank origin inside the set fails startup`() {
         runner.withPropertyValues(
             "webauthn.rp.id=localhost",
+            "webauthn.rp.name=Demo",
             "webauthn.rp.origins[0]=",
         ).run { context ->
             val failure = context.startupFailure
@@ -128,6 +133,68 @@ class WebAuthnRpPropertiesTest {
             assertTrue(
                 failure!!.stackTraceToString()
                     .contains("webauthn.rp.origins must not contain a blank origin"),
+                failure.stackTraceToString().take(500),
+            )
+        }
+    }
+
+    /**
+     * The absent-configuration cases, distinct from the blank-value cases above: a property that
+     * is missing entirely once bound to a default, which then satisfied the `require` checks and
+     * let the server start against an undefined relying party.
+     */
+    @Test
+    fun `wholly absent configuration fails startup naming the relying party id`() {
+        runner.run { context ->
+            val failure = context.startupFailure
+            assertTrue(failure != null, "context should fail to start with no webauthn.rp.* at all")
+            assertTrue(
+                failure!!.stackTraceToString().contains("webauthn.rp.id must be configured"),
+                failure.stackTraceToString().take(500),
+            )
+        }
+    }
+
+    @Test
+    fun `absent relying party id fails startup`() {
+        runner.withPropertyValues(
+            "webauthn.rp.name=Demo",
+            "webauthn.rp.origins[0]=http://localhost:8080",
+        ).run { context ->
+            val failure = context.startupFailure
+            assertTrue(failure != null, "context should fail to start")
+            assertTrue(
+                failure!!.stackTraceToString().contains("webauthn.rp.id must be configured"),
+                failure.stackTraceToString().take(500),
+            )
+        }
+    }
+
+    @Test
+    fun `absent relying party name fails startup`() {
+        runner.withPropertyValues(
+            "webauthn.rp.id=localhost",
+            "webauthn.rp.origins[0]=http://localhost:8080",
+        ).run { context ->
+            val failure = context.startupFailure
+            assertTrue(failure != null, "context should fail to start")
+            assertTrue(
+                failure!!.stackTraceToString().contains("webauthn.rp.name must be configured"),
+                failure.stackTraceToString().take(500),
+            )
+        }
+    }
+
+    @Test
+    fun `absent origin set fails startup`() {
+        runner.withPropertyValues(
+            "webauthn.rp.id=localhost",
+            "webauthn.rp.name=Demo",
+        ).run { context ->
+            val failure = context.startupFailure
+            assertTrue(failure != null, "context should fail to start")
+            assertTrue(
+                failure!!.stackTraceToString().contains("webauthn.rp.origins must be configured"),
                 failure.stackTraceToString().take(500),
             )
         }
