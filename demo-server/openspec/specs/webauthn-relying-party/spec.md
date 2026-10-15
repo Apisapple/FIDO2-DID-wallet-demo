@@ -42,7 +42,7 @@ The relying party SHALL be configured with a set of accepted client origins, and
 #### Scenario: Unlisted origin is rejected
 
 - **WHEN** a ceremony is verified whose client data origin is not a member of the configured set
-- **THEN** the system rejects the ceremony with `status: "failed"` and a non-empty `errorMessage`, and no credential is persisted or updated
+- **THEN** the system rejects the ceremony with HTTP 200 and `success: false` and a non-empty `message`, and no credential is persisted or updated
 
 #### Scenario: Origin set is empty
 

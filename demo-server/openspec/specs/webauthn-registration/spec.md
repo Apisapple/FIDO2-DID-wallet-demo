@@ -25,8 +25,8 @@ The response envelope SHALL carry a `status` of `"ok"` and an empty `errorMessag
 
 #### Scenario: Missing username
 
-- **WHEN** a client POSTs a registration options request without a username
-- **THEN** the system returns an error envelope with `status: "failed"` and a non-empty `errorMessage`, and does not generate a challenge
+- **WHEN** a client POSTs a registration options request without a usable username, whether the field is blank or absent from the body
+- **THEN** the system returns an error envelope with `success: false` and a non-empty `message`, and does not generate a challenge
 
 ### Requirement: Verify registration result
 
@@ -39,27 +39,27 @@ The system SHALL support `attestation=none`; verification of full attestation tr
 #### Scenario: Valid attestation is registered
 
 - **WHEN** a client POSTs a valid attestation response referencing an issued, unexpired challenge
-- **THEN** the system verifies the response, persists a credential (credential ID, public key, signature algorithm, sign counter, AAGUID, transports) associated with the relying party and user, and returns HTTP 200 with `status: "ok"`
+- **THEN** the system verifies the response, persists a credential (credential ID, public key, signature algorithm, sign counter, AAGUID, transports) associated with the relying party and user, and returns HTTP 200 with `success: true`
 
 #### Scenario: Challenge is unknown or expired
 
 - **WHEN** a client POSTs an attestation response whose challenge is not found server-side or has expired
-- **THEN** the system returns an error envelope with `status: "failed"` and a non-empty `errorMessage`, and no credential is persisted
+- **THEN** the system returns an error envelope with `success: false` and a non-empty `message`, and no credential is persisted
 
 #### Scenario: Origin or RP ID mismatch
 
 - **WHEN** the attestation's client data origin or RP ID hash does not match the configured relying party
-- **THEN** the system rejects the request with `status: "failed"` and a non-empty `errorMessage`, and no credential is persisted
+- **THEN** the system rejects the request with `success: false` and a non-empty `message`, and no credential is persisted
 
 #### Scenario: Duplicate credential
 
 - **WHEN** a client submits an attestation whose credential ID is already registered
-- **THEN** the system rejects the registration with `status: "failed"` and a non-empty `errorMessage`, and does not create a duplicate credential
+- **THEN** the system rejects the registration with `success: false` and a non-empty `message`, and does not create a duplicate credential
 
 #### Scenario: Challenge cannot be replayed
 
 - **WHEN** a challenge has already been used in a verification attempt
-- **THEN** a subsequent verification attempt referencing the same challenge is rejected with `status: "failed"`
+- **THEN** a subsequent verification attempt referencing the same challenge is rejected with `success: false`
 
 ### Requirement: Enforce user presence during registration
 
@@ -73,7 +73,7 @@ Registration verification SHALL require the user presence flag in the authentica
 #### Scenario: User presence not asserted
 
 - **WHEN** a client POSTs an attestation whose authenticator data does not have the user presence flag set
-- **THEN** the system rejects the registration with `status: "failed"` and a non-empty `errorMessage`, and no credential is persisted
+- **THEN** the system rejects the registration with `success: false` and a non-empty `message`, and no credential is persisted
 
 ### Requirement: Enforce the advertised user verification requirement
 
@@ -89,7 +89,7 @@ The user verification requirement advertised in the registration options SHALL b
 
 - **GIVEN** registration options advertised `userVerification: "required"`
 - **WHEN** a client POSTs an attestation whose authenticator data does not assert user verification
-- **THEN** the system rejects the registration with `status: "failed"` and a non-empty `errorMessage`, and no credential is persisted
+- **THEN** the system rejects the registration with `success: false` and a non-empty `message`, and no credential is persisted
 
 #### Scenario: Preferred user verification is absent
 
@@ -153,3 +153,36 @@ Registration options SHALL request the credential properties extension, and on s
 
 - **WHEN** a credential is registered and the client returns no credential properties extension output
 - **THEN** the persisted credential records the resident-key state as unknown, and registration still succeeds
+
+### Requirement: Response envelope shapes
+
+The two endpoints SHALL answer with asymmetric envelopes. A successful options request SHALL carry `status: "ok"`, an empty `errorMessage`, and the ceremony options under `options`. A successful result, and every handled failure of either endpoint, SHALL carry `success` and a `message`. A handled failure SHALL be returned with HTTP 200 and `success: false`, so a client SHALL NOT judge the outcome by status code alone.
+
+#### Scenario: Options success carries the status envelope
+
+- **WHEN** a client POSTs a valid registration options request
+- **THEN** the response carries `status: "ok"`, an empty `errorMessage`, and the options under `options`
+
+#### Scenario: Result success carries the success envelope
+
+- **WHEN** a client POSTs an attestation that verifies
+- **THEN** the response carries `success: true` and a `message`
+
+#### Scenario: A handled failure answers HTTP 200
+
+- **WHEN** a verification fails for a handled reason, such as an unknown challenge or a duplicate credential
+- **THEN** the response is HTTP 200 carrying `success: false` and a non-empty `message`, and a client reading only the status code would wrongly read it as success
+
+### Requirement: Unreadable request bodies answer with the failure envelope
+
+A request whose body cannot be read — malformed JSON, or a body omitting a field the endpoint requires — SHALL be answered with the same failure envelope as any other handled failure: `success: false` and a non-empty `message`. The response SHALL NOT expose a framework error page, and SHALL NOT include a stack trace or other internal diagnostic detail.
+
+#### Scenario: Options request omits the username field entirely
+
+- **WHEN** a client POSTs a registration options request whose body omits the `username` field
+- **THEN** the system answers with `success: false` and a non-empty `message`, no challenge is generated, and the response carries no stack trace
+
+#### Scenario: Options request carries malformed JSON
+
+- **WHEN** a client POSTs a registration options request whose body is not valid JSON
+- **THEN** the system answers with `success: false` and a non-empty `message`, and the response carries no stack trace
