@@ -21,6 +21,8 @@ import com.raonsecure.demoserver.registration.exception.ChallengeNotFoundExcepti
 import com.raonsecure.demoserver.registration.exception.DuplicateCredentialException
 import com.raonsecure.demoserver.registration.exception.RegistrationVerificationException
 import com.webauthn4j.WebAuthnManager
+import com.webauthn4j.converter.CollectedClientDataConverter
+import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.data.RegistrationData
 import com.webauthn4j.data.RegistrationParameters
 import com.webauthn4j.data.RegistrationRequest
@@ -47,6 +49,9 @@ class RegistrationService(
 ) {
     private val random = SecureRandom()
     private val challengeTtl = Duration.ofSeconds(60)
+
+    /** Reads clientDataJSON on its own, ahead of attestation parsing, to consume the challenge. */
+    private val collectedClientDataConverter = CollectedClientDataConverter(ObjectConverter())
 
     fun createOptions(request: RegistrationOptionsRequest): RegistrationDataResponse {
         val rp = rpRepository.findById(rpProperties.id).orElseThrow {
@@ -111,20 +116,29 @@ class RegistrationService(
         val attestationBytes = Base64.getUrlDecoder().decode(result.response.attestationObject)
         val transports = result.response.transports?.toSet()
 
-        val parsed = try {
+        // The challenge is read and consumed before the attestation is parsed, so a verification
+        // attempt that fails during parsing still burns the challenge. Reading it from the parsed
+        // result instead would leave a replayable challenge behind whenever parsing threw.
+        val collectedClientData = try {
+            collectedClientDataConverter.convert(clientDataBytes)
+        } catch (e: Exception) {
+            throw RegistrationVerificationException("Failed to parse clientDataJSON: ${e.message}", e)
+        }
+
+        val challengeValue = collectedClientData?.challenge?.value
+            ?: throw RegistrationVerificationException("Missing challenge in clientData")
+        val challengeStr = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeValue)
+
+        val pendingCtx = challengeStore.consume(challengeStr)
+            ?: throw ChallengeNotFoundException(challengeStr)
+
+        try {
             webAuthnManager.parse(
                 RegistrationRequest(attestationBytes, clientDataBytes, null, transports)
             )
         } catch (e: Exception) {
             throw RegistrationVerificationException("Failed to parse attestation: ${e.message}", e)
         }
-
-        val challengeBytes2 = parsed.collectedClientData?.challenge?.value
-            ?: throw RegistrationVerificationException("Missing challenge in clientData")
-        val challengeStr = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeBytes2)
-
-        val pendingCtx = challengeStore.consume(challengeStr)
-            ?: throw ChallengeNotFoundException(challengeStr)
 
         val serverProperty = ServerProperty.builder()
             .origins(rpProperties.origins.map { Origin.create(it) }.toSet())

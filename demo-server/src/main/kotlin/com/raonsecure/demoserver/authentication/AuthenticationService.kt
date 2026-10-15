@@ -16,6 +16,8 @@ import com.raonsecure.demoserver.common.data.UserVerificationRequirement
 import com.raonsecure.demoserver.config.WebAuthnRpProperties
 import com.raonsecure.demoserver.registration.challenge.ChallengeStore
 import com.webauthn4j.WebAuthnManager
+import com.webauthn4j.converter.CollectedClientDataConverter
+import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.credential.CredentialRecordImpl
 import com.webauthn4j.data.AuthenticationParameters
 import com.webauthn4j.data.AuthenticationRequest
@@ -49,6 +51,9 @@ class AuthenticationService(
 ) {
     private val random = SecureRandom()
     private val challengeTtl = Duration.ofSeconds(60)
+
+    /** Reads clientDataJSON on its own, ahead of assertion parsing, to consume the challenge. */
+    private val collectedClientDataConverter = CollectedClientDataConverter(ObjectConverter())
 
     fun createOptions(request: AuthenticationOptionsRequest): AuthenticationDataResponse {
         val username = request.username?.trim()
@@ -112,18 +117,27 @@ class AuthenticationService(
             signatureBytes,
         )
 
-        val parsed = try {
+        // The challenge is read and consumed before the assertion is parsed, so a verification
+        // attempt that fails during parsing still burns the challenge. Reading it from the parsed
+        // result instead would leave a replayable challenge behind whenever parsing threw.
+        val collectedClientData = try {
+            collectedClientDataConverter.convert(clientDataBytes)
+        } catch (e: Exception) {
+            throw AuthenticationVerificationException("Failed to parse clientDataJSON: ${e.message}", e)
+        }
+
+        val challengeValue = collectedClientData?.challenge?.value
+            ?: throw AuthenticationVerificationException("Missing challenge in clientData")
+        val challengeStr = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeValue)
+
+        val pendingCtx = challengeStore.consumeAuthentication(challengeStr)
+            ?: throw AuthenticationChallengeNotFoundException(challengeStr)
+
+        try {
             webAuthnManager.parse(authRequest)
         } catch (e: Exception) {
             throw AuthenticationVerificationException("Failed to parse assertion: ${e.message}", e)
         }
-
-        val challengeBytes = parsed.collectedClientData?.challenge?.value
-            ?: throw AuthenticationVerificationException("Missing challenge in clientData")
-        val challengeStr = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeBytes)
-
-        val pendingCtx = challengeStore.consumeAuthentication(challengeStr)
-            ?: throw AuthenticationChallengeNotFoundException(challengeStr)
 
         val userKey = userKeyRepository.findByCredentialId(credentialIdRaw)
             ?: throw CredentialNotFoundException(credentialIdRaw)
