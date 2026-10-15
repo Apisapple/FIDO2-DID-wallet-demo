@@ -283,10 +283,20 @@ webauthn:
         sha256-cert-fingerprints: ["AA:BB:CC:..."]
 ```
 
-`id` must not be blank and `origins` must not be empty or contain a blank entry; the application
-fails to start otherwise. A ceremony is accepted only when the client data origin matches a
-member of `origins` exactly, which is what lets one instance serve both browser and Android
-clients.
+`id`, `name` and `origins` must each be stated: none has a default, so a configuration that omits
+one fails to start with an error naming it, rather than serving ceremonies against an undefined
+relying party. They must also not be blank, and `origins` must not be empty or contain a blank
+entry. A ceremony is accepted only when the client data origin matches a member of `origins`
+exactly, which is what lets one instance serve both browser and Android clients.
+
+The block above is therefore not in `application.yml`. For local development it ships as the
+`rp-defaults` profile (`application-rp-defaults.yml`), activated explicitly:
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=rp-defaults'
+```
+
+A real deployment states its own `webauthn.rp.*` and leaves that profile off.
 
 ## Notes and limits
 

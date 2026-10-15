@@ -12,8 +12,10 @@ FIDO2 WebAuthn demo server — a Spring Boot backend implementing FIDO2 credenti
 # Build
 ./gradlew build
 
-# Run server (port 8080)
-./gradlew bootRun
+# Run server (port 8080). The relying party identity has no defaults, so a run with no
+# webauthn.rp.* configuration fails at startup by design; the rp-defaults profile carries
+# the demo identity for local development.
+./gradlew bootRun --args='--spring.profiles.active=rp-defaults'
 
 # Run all tests
 ./gradlew test
@@ -32,6 +34,17 @@ FIDO2 WebAuthn demo server — a Spring Boot backend implementing FIDO2 credenti
 - **Embedded Redis** — no external Redis needed; dependency is architecture-aware (`codemonstur/embedded-redis` on aarch64/Apple Silicon, `kstyrc/embedded-redis` on x86)
 - **Spring Data JPA** with Hibernate (`ddl-auto: update`)
 - **Spring MVC** (servlet stack, not reactive)
+
+## Relying Party Configuration
+
+`WebAuthnRpProperties` (`webauthn.rp.*`) carries **no defaults** for `id`, `name` or `origins` — a
+missing property is rejected by name at startup rather than binding to a fallback, so the server
+cannot serve ceremonies against an undefined relying party (see the `webauthn-relying-party` spec).
+
+The demo identity therefore lives in the `rp-defaults` profile
+(`src/main/resources/application-rp-defaults.yml`), not in `application.yml`. Any test that starts a
+context needs `@ActiveProfiles("rp-defaults")` or its own `webauthn.rp.*` property values.
+`androidApps` keeps its `emptyList()` default: it is genuinely optional.
 
 ## Package Structure
 

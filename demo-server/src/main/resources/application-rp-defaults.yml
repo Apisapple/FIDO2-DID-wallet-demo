@@ -1,0 +1,24 @@
+# Relying party defaults for local development, carried in a profile rather than in
+# application.yml on purpose. WebAuthnRpProperties rejects an absent identity at startup
+# (see the webauthn-relying-party spec), so a deployment that forgets to configure
+# webauthn.rp.* fails by name instead of binding to a fallback. Activating this profile is
+# the explicit, visible way to ask for the demo identity:
+#
+#   ./gradlew bootRun --args='--spring.profiles.active=rp-defaults'
+#
+# A real deployment states its own webauthn.rp.* and leaves this profile off.
+webauthn:
+  rp:
+    id: localhost
+    name: FIDO2 Demo Server
+    # Accepted client origins. Add the Android client's apk-key-hash origin here once the
+    # wallet's signing certificate is known; the placeholder below is not a real key hash.
+    origins:
+      - http://localhost:8080
+      - android:apk-key-hash:pNiP5iKyQ8JwgGOaKA1zGPUPJIS-0H1xKCQcfIoGLck
+    # Android applications published at /.well-known/assetlinks.json. Fill in the wallet's real
+    # package name and signing certificate fingerprints; the apk-key-hash origin above must match.
+    # android-apps:
+    #   - package-name: com.raonsecure.wallet
+    #     sha256-cert-fingerprints:
+    #       - "AA:BB:CC:..."

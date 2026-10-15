@@ -9,8 +9,9 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Configuration
 
 /**
- * Binds the shipped `application.yml` so the `webauthn.rp.origins` list is proven to bind rather
- * than silently falling back to the property defaults.
+ * Binds the shipped `application-rp-defaults.yml` so the profile that carries the demo relying
+ * party identity is proven to bind -- `WebAuthnRpProperties` has no defaults of its own, so a
+ * profile that failed to bind would fail startup rather than degrade quietly.
  *
  * Uses [ApplicationContextRunner] against the real YAML rather than `@SpringBootTest`: a full
  * context would start the embedded Redis server, and an extra context that binds to port 6379
@@ -25,6 +26,7 @@ class ApplicationYamlRpConfigTest {
     private val runner = ApplicationContextRunner()
         .withUserConfiguration(PropertiesOnlyConfig::class.java)
         .withInitializer(ConfigDataApplicationContextInitializer())
+        .withPropertyValues("spring.profiles.active=rp-defaults")
 
     @Test
     fun `shipped configuration binds the relying party identity`() {
@@ -44,8 +46,27 @@ class ApplicationYamlRpConfigTest {
                 origins.any { it.startsWith("android:apk-key-hash:") },
                 "origins=$origins",
             )
-            // Proves the YAML list bound rather than the single-entry default.
             assertEquals(2, origins.size, "origins=$origins")
         }
+    }
+
+    /**
+     * The reason the identity lives in a profile rather than in `application.yml`: the base
+     * configuration alone must not start, so a deployment that states no relying party is
+     * rejected instead of inheriting the demo one.
+     */
+    @Test
+    fun `base configuration without the profile fails startup`() {
+        ApplicationContextRunner()
+            .withUserConfiguration(PropertiesOnlyConfig::class.java)
+            .withInitializer(ConfigDataApplicationContextInitializer())
+            .run { context ->
+                val failure = context.startupFailure
+                assertTrue(failure != null, "context should fail without the rp-defaults profile")
+                assertTrue(
+                    failure!!.stackTraceToString().contains("webauthn.rp.id must be configured"),
+                    failure.stackTraceToString().take(500),
+                )
+            }
     }
 }

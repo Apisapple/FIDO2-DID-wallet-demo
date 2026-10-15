@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.test.context.ActiveProfiles
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -24,6 +25,7 @@ import java.util.Base64
     // moved aside here; leaving it on the default collides with the context already holding 6379.
     properties = ["spring.data.redis.port=16380"],
 )
+@ActiveProfiles("rp-defaults")
 class CeremonyOverHttpTest {
 
     @LocalServerPort
