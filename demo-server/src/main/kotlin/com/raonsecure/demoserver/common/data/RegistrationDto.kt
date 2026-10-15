@@ -5,11 +5,20 @@ import com.fasterxml.jackson.annotation.JsonInclude
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class RegistrationOptionsRequest(
-    val username: String,
+    /**
+     * Nullable so that an omitted field reaches the endpoint's own validation rather than failing
+     * during deserialization. A blank username and an absent one are the same error and are
+     * reported the same way; [requiredUsername] is the validated value.
+     */
+    val username: String? = null,
     val displayName: String? = null,
     val attestation: String? = AttestationConveyancePreference.NONE.value,
     val authenticatorSelection: AuthenticatorSelectionCriteria? = null,
-)
+) {
+    /** The username, once validated as present and non-blank. */
+    val requiredUsername: String
+        get() = requireNotNull(username) { "username is required" }
+}
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class RegistrationDataResponse(

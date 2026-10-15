@@ -61,8 +61,8 @@ class RegistrationService(
         val challengeBytes = ByteArray(32).also { random.nextBytes(it) }
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeBytes)
 
-        val userId = resolveUserId(request.username)
-        val displayName = request.displayName ?: request.username
+        val userId = resolveUserId(request.requiredUsername)
+        val displayName = request.displayName ?: request.requiredUsername
 
         // One value drives both the advertised selection criteria and the stored policy, so
         // verification cannot enforce something different from what the client was told.
@@ -71,7 +71,7 @@ class RegistrationService(
             ?: UserVerificationRequirement.PREFERRED.value
 
         val context = PendingRegistrationContext(
-            username = request.username,
+            username = request.requiredUsername,
             userId = userId,
             userDisplayName = displayName,
             challenge = challenge,
@@ -79,7 +79,7 @@ class RegistrationService(
         )
         challengeStore.save(challenge, context, challengeTtl)
 
-        val existingCredentials = userKeyRepository.findAllByUsername(request.username)
+        val existingCredentials = userKeyRepository.findAllByUsername(request.requiredUsername)
             .map { PublicKeyCredentialDescriptor(id = it.credentialId) }
             .ifEmpty { null }
 
@@ -88,7 +88,7 @@ class RegistrationService(
             user = PublicKeyCredentialUserEntity(
                 id = userId,
                 displayName = displayName,
-                name = request.username,
+                name = request.requiredUsername,
             ),
             challenge = challenge,
             pubKeyCredParams = listOf(

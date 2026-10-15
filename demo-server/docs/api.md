@@ -44,8 +44,8 @@ status code alone.
 ```
 
 > The two envelopes are not symmetric: options answer with `status`, results with `success`, and a
-> failed options request answers with the `success` shape rather than `status: "failed"`. Treat
-> this as the current behaviour, not as an intended contract.
+> failed options request answers with the `success` shape rather than `status: "failed"`. This is
+> the specified contract — see the `webauthn-registration` and `webauthn-authentication` specs.
 
 ## POST /attestation/options
 
@@ -102,8 +102,8 @@ Failures:
 
 | Condition | HTTP | Body |
 |---|---|---|
-| Blank `username` | 400 | `{"success": false, "message": "username is required"}` |
-| `username` absent entirely | 400 | Spring's default error body (deserialization fails before the handler) |
+| Blank or absent `username` | 400 | `{"success": false, "message": "username is required"}` |
+| Body is not readable JSON | 400 | `{"success": false, "message": "Request body could not be read: ..."}` |
 
 ## POST /attestation/result
 

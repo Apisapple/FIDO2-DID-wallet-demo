@@ -16,7 +16,7 @@ class RegistrationController(private val registrationService: RegistrationServic
 
     @PostMapping("/options")
     fun options(@RequestBody request: RegistrationOptionsRequest): ResponseEntity<Any> {
-        if (request.username.isBlank()) {
+        if (request.username.isNullOrBlank()) {
             return ResponseEntity.badRequest().body(
                 WebAuthnVerificationResponse(success = false, message = "username is required")
             )
