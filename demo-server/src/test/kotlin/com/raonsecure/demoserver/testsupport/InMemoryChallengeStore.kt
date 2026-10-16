@@ -13,18 +13,25 @@ class InMemoryChallengeStore : ChallengeStore {
     private val registrations = mutableMapOf<String, PendingRegistrationContext>()
     private val authentications = mutableMapOf<String, PendingAuthenticationContext>()
 
-    override fun save(challenge: String, context: PendingRegistrationContext, ttl: Duration) {
+    override fun save(
+        challenge: String,
+        context: PendingRegistrationContext,
+        ttl: Duration,
+    ) {
         registrations[challenge] = context
     }
 
     override fun consume(challenge: String): PendingRegistrationContext? = registrations.remove(challenge)
 
-    override fun saveAuthentication(challenge: String, context: PendingAuthenticationContext, ttl: Duration) {
+    override fun saveAuthentication(
+        challenge: String,
+        context: PendingAuthenticationContext,
+        ttl: Duration,
+    ) {
         authentications[challenge] = context
     }
 
-    override fun consumeAuthentication(challenge: String): PendingAuthenticationContext? =
-        authentications.remove(challenge)
+    override fun consumeAuthentication(challenge: String): PendingAuthenticationContext? = authentications.remove(challenge)
 
     fun savedRegistration(challenge: String): PendingRegistrationContext? = registrations[challenge]
 

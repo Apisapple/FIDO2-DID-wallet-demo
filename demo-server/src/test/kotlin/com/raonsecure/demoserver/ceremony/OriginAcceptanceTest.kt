@@ -14,7 +14,6 @@ import org.junit.jupiter.api.assertThrows
  * `apk-key-hash:` origin, and an unlisted origin is refused.
  */
 class OriginAcceptanceTest {
-
     private val webOrigin = CeremonyFixture.DEFAULT_ORIGIN
     private val androidOrigin = CeremonyFixture.ANDROID_ORIGIN
     private val bothOrigins = setOf(webOrigin, androidOrigin)
@@ -58,10 +57,11 @@ class OriginAcceptanceTest {
 
     @Test
     fun `unlisted origin is rejected at registration`() {
-        val harness = CeremonyHarness(
-            origins = setOf(webOrigin),
-            fixtureOrigin = "https://evil.example.com",
-        )
+        val harness =
+            CeremonyHarness(
+                origins = setOf(webOrigin),
+                fixtureOrigin = "https://evil.example.com",
+            )
 
         assertThrows<RegistrationVerificationException> {
             harness.register(username = "eve")
@@ -75,11 +75,12 @@ class OriginAcceptanceTest {
         val registered = registrar.register(username = "frank")
 
         // Same credential store, but the client now reports an origin the RP does not accept.
-        val attacker = CeremonyHarness(
-            origins = setOf(webOrigin),
-            fixtureOrigin = "https://evil.example.com",
-            credentials = registrar.credentials,
-        )
+        val attacker =
+            CeremonyHarness(
+                origins = setOf(webOrigin),
+                fixtureOrigin = "https://evil.example.com",
+                credentials = registrar.credentials,
+            )
 
         assertThrows<AuthenticationVerificationException> {
             attacker.authenticate(credentialId = registered.credentialId, username = "frank")

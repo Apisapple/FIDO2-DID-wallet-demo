@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice(basePackageClasses = [RegistrationController::class])
 class RegistrationExceptionHandler {
-
     @ExceptionHandler(ChallengeNotFoundException::class)
     fun handleChallengeNotFound(e: ChallengeNotFoundException): ResponseEntity<WebAuthnVerificationResponse> =
         ResponseEntity.ok(WebAuthnVerificationResponse(success = false, message = e.message))

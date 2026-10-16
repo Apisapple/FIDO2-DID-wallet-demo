@@ -4,9 +4,19 @@ import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationC
 import java.time.Duration
 
 interface ChallengeStore {
-    fun save(challenge: String, context: PendingRegistrationContext, ttl: Duration)
+    fun save(
+        challenge: String,
+        context: PendingRegistrationContext,
+        ttl: Duration,
+    )
+
     fun consume(challenge: String): PendingRegistrationContext?
 
-    fun saveAuthentication(challenge: String, context: PendingAuthenticationContext, ttl: Duration)
+    fun saveAuthentication(
+        challenge: String,
+        context: PendingAuthenticationContext,
+        ttl: Duration,
+    )
+
     fun consumeAuthentication(challenge: String): PendingAuthenticationContext?
 }

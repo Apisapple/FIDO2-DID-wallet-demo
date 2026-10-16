@@ -17,22 +17,23 @@ import org.junit.jupiter.api.assertThrows
  * additionally has to carry one, since nothing else tells the server who is authenticating.
  */
 class UserHandleBindingTest {
-
     @Test
     fun `options record whether a username was provided`() {
         val harness = CeremonyHarness()
         harness.register(username = "alice")
 
-        val named = harness.authenticationService.createOptions(
-            AuthenticationOptionsRequest(username = "alice"),
-        )
+        val named =
+            harness.authenticationService.createOptions(
+                AuthenticationOptionsRequest(username = "alice"),
+            )
         assertTrue(
             harness.challengeStore.savedAuthentication(named.challenge)!!.usernameProvided,
         )
 
-        val usernameless = harness.authenticationService.createOptions(
-            AuthenticationOptionsRequest(username = null),
-        )
+        val usernameless =
+            harness.authenticationService.createOptions(
+                AuthenticationOptionsRequest(username = null),
+            )
         assertFalse(
             harness.challengeStore.savedAuthentication(usernameless.challenge)!!.usernameProvided,
         )
@@ -55,13 +56,15 @@ class UserHandleBindingTest {
         harness.register(username = "bob")
         val bobHandle = harness.credentials.single { it.username == "bob" }.userId
 
-        val options = harness.authenticationService.createOptions(
-            AuthenticationOptionsRequest(username = "alice"),
-        )
-        val asserted = harness.fixture.authenticate(
-            challenge = options.challenge,
-            credentialId = alice.credentialId,
-        )
+        val options =
+            harness.authenticationService.createOptions(
+                AuthenticationOptionsRequest(username = "alice"),
+            )
+        val asserted =
+            harness.fixture.authenticate(
+                challenge = options.challenge,
+                credentialId = alice.credentialId,
+            )
 
         assertThrows<UserHandleMismatchException> {
             harness.authenticationService.verify(asserted.toDto(overrideUserHandle = bobHandle))
@@ -73,17 +76,20 @@ class UserHandleBindingTest {
         val harness = CeremonyHarness()
         val registered = harness.register(username = "alice")
 
-        val options = harness.authenticationService.createOptions(
-            AuthenticationOptionsRequest(username = null),
-        )
-        val asserted = harness.fixture.authenticate(
-            challenge = options.challenge,
-            credentialId = registered.credentialId,
-        )
+        val options =
+            harness.authenticationService.createOptions(
+                AuthenticationOptionsRequest(username = null),
+            )
+        val asserted =
+            harness.fixture.authenticate(
+                challenge = options.challenge,
+                credentialId = registered.credentialId,
+            )
 
-        val failure = assertThrows<AuthenticationVerificationException> {
-            harness.authenticationService.verify(asserted.toDto(overrideUserHandle = null))
-        }
+        val failure =
+            assertThrows<AuthenticationVerificationException> {
+                harness.authenticationService.verify(asserted.toDto(overrideUserHandle = null))
+            }
         assertTrue(
             failure.message!!.contains("must carry a userHandle"),
             failure.message,
@@ -96,13 +102,15 @@ class UserHandleBindingTest {
         val registered = harness.register(username = "alice")
         val handle = harness.credentials.single().userId
 
-        val options = harness.authenticationService.createOptions(
-            AuthenticationOptionsRequest(username = null),
-        )
-        val asserted = harness.fixture.authenticate(
-            challenge = options.challenge,
-            credentialId = registered.credentialId,
-        )
+        val options =
+            harness.authenticationService.createOptions(
+                AuthenticationOptionsRequest(username = null),
+            )
+        val asserted =
+            harness.fixture.authenticate(
+                challenge = options.challenge,
+                credentialId = registered.credentialId,
+            )
         harness.authenticationService.verify(asserted.toDto(overrideUserHandle = handle))
 
         assertNotNull(harness.credentials.single().authenticatedTimestamp)
@@ -113,13 +121,15 @@ class UserHandleBindingTest {
         val harness = CeremonyHarness()
         val registered = harness.register(username = "alice")
 
-        val options = harness.authenticationService.createOptions(
-            AuthenticationOptionsRequest(username = "alice"),
-        )
-        val asserted = harness.fixture.authenticate(
-            challenge = options.challenge,
-            credentialId = registered.credentialId,
-        )
+        val options =
+            harness.authenticationService.createOptions(
+                AuthenticationOptionsRequest(username = "alice"),
+            )
+        val asserted =
+            harness.fixture.authenticate(
+                challenge = options.challenge,
+                credentialId = registered.credentialId,
+            )
         harness.authenticationService.verify(asserted.toDto(overrideUserHandle = null))
 
         assertEquals(1, harness.credentials.size)

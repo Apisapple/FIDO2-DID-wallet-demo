@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.post
 @WebMvcTest(controllers = [RegistrationController::class])
 @Import(MalformedRequestExceptionHandler::class)
 class MalformedRequestBodyTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -28,26 +27,28 @@ class MalformedRequestBodyTest {
 
     @Test
     fun `body omitting username answers with the failure envelope`() {
-        mockMvc.post("/attestation/options") {
-            contentType = MediaType.APPLICATION_JSON
-            content = "{}"
-        }.andExpect {
-            jsonPath("$.success") { value(false) }
-            jsonPath("$.message") { exists() }
-            jsonPath("$.trace") { doesNotExist() }
-        }
+        mockMvc
+            .post("/attestation/options") {
+                contentType = MediaType.APPLICATION_JSON
+                content = "{}"
+            }.andExpect {
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.message") { exists() }
+                jsonPath("$.trace") { doesNotExist() }
+            }
     }
 
     @Test
     fun `malformed json answers with the failure envelope and no parser detail`() {
-        mockMvc.post("/attestation/options") {
-            contentType = MediaType.APPLICATION_JSON
-            content = "this is not json"
-        }.andExpect {
-            jsonPath("$.success") { value(false) }
-            jsonPath("$.message") { exists() }
-            jsonPath("$.trace") { doesNotExist() }
-        }
+        mockMvc
+            .post("/attestation/options") {
+                contentType = MediaType.APPLICATION_JSON
+                content = "this is not json"
+            }.andExpect {
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.message") { exists() }
+                jsonPath("$.trace") { doesNotExist() }
+            }
     }
 
     /**
@@ -56,10 +57,13 @@ class MalformedRequestBodyTest {
      */
     @Test
     fun `malformed json message carries no internal detail`() {
-        val body = mockMvc.post("/attestation/options") {
-            contentType = MediaType.APPLICATION_JSON
-            content = "this is not json"
-        }.andReturn().response.contentAsString
+        val body =
+            mockMvc
+                .post("/attestation/options") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = "this is not json"
+                }.andReturn()
+                .response.contentAsString
 
         listOf("RegistrationOptionsRequest", "JsonParseException", "tools.jackson", "at [Source")
             .forEach { leak ->
@@ -74,10 +78,12 @@ class MalformedRequestBodyTest {
     @Test
     fun `absent and blank username produce the same envelope`() {
         fun envelopeFor(content: String): String =
-            mockMvc.post("/attestation/options") {
-                contentType = MediaType.APPLICATION_JSON
-                this.content = content
-            }.andReturn().response.contentAsString
+            mockMvc
+                .post("/attestation/options") {
+                    contentType = MediaType.APPLICATION_JSON
+                    this.content = content
+                }.andReturn()
+                .response.contentAsString
 
         val absent = envelopeFor("{}")
         val blank = envelopeFor("""{"username":""}""")

@@ -1,11 +1,11 @@
 package com.raonsecure.demoserver.registration
 
 import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationContext
-import com.raonsecure.demoserver.registration.challenge.PendingRegistrationContext
 import com.raonsecure.demoserver.base.entity.UserKeyEntity
 import com.raonsecure.demoserver.base.repository.RpRepository
 import com.raonsecure.demoserver.base.repository.UserKeyRepository
 import com.raonsecure.demoserver.config.WebAuthnRpProperties
+import com.raonsecure.demoserver.registration.challenge.PendingRegistrationContext
 import com.raonsecure.demoserver.registration.challenge.RedisChallengeStore
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -21,7 +21,6 @@ import java.util.Date
 @SpringBootTest
 @ActiveProfiles("rp-defaults")
 class RedisChallengeStoreTest {
-
     @Autowired
     lateinit var challengeStore: RedisChallengeStore
 
@@ -88,7 +87,8 @@ class RedisChallengeStoreTest {
             val rp = rpRepository.findById(rpProperties.id).orElseThrow()
 
             userKeyRepository.save(
-                UserKeyEntity.builder()
+                UserKeyEntity
+                    .builder()
                     .rpEntity(rp)
                     .userId("a".repeat(43))
                     .username("persist-test")

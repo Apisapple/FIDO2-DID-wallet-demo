@@ -13,18 +13,18 @@ import org.junit.jupiter.api.Test
  * something the options never advertised.
  */
 class AdvertisedUserVerificationTest {
-
     @Test
     fun `registration stores the requirement it advertised`() {
         for (requested in listOf("required", "preferred", "discouraged")) {
             val harness = CeremonyHarness()
 
-            val options = harness.registrationService.createOptions(
-                RegistrationOptionsRequest(
-                    username = "alice",
-                    authenticatorSelection = AuthenticatorSelectionCriteria(userVerification = requested),
-                ),
-            )
+            val options =
+                harness.registrationService.createOptions(
+                    RegistrationOptionsRequest(
+                        username = "alice",
+                        authenticatorSelection = AuthenticatorSelectionCriteria(userVerification = requested),
+                    ),
+                )
 
             assertEquals(requested, options.authenticatorSelection?.userVerification)
             assertEquals(
@@ -39,9 +39,10 @@ class AdvertisedUserVerificationTest {
     fun `registration defaults to preferred when the request omits it`() {
         val harness = CeremonyHarness()
 
-        val options = harness.registrationService.createOptions(
-            RegistrationOptionsRequest(username = "alice"),
-        )
+        val options =
+            harness.registrationService.createOptions(
+                RegistrationOptionsRequest(username = "alice"),
+            )
 
         assertEquals("preferred", options.authenticatorSelection?.userVerification)
         assertEquals(
@@ -56,9 +57,10 @@ class AdvertisedUserVerificationTest {
             val harness = CeremonyHarness()
             harness.register(username = "alice")
 
-            val options = harness.authenticationService.createOptions(
-                AuthenticationOptionsRequest(username = "alice", userVerification = requested),
-            )
+            val options =
+                harness.authenticationService.createOptions(
+                    AuthenticationOptionsRequest(username = "alice", userVerification = requested),
+                )
 
             assertEquals(requested, options.userVerification)
             assertEquals(
@@ -74,9 +76,10 @@ class AdvertisedUserVerificationTest {
         val harness = CeremonyHarness()
         harness.register(username = "alice")
 
-        val options = harness.authenticationService.createOptions(
-            AuthenticationOptionsRequest(username = "alice", userVerification = null),
-        )
+        val options =
+            harness.authenticationService.createOptions(
+                AuthenticationOptionsRequest(username = "alice", userVerification = null),
+            )
 
         assertEquals("preferred", options.userVerification)
         assertEquals(

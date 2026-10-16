@@ -14,10 +14,12 @@ import java.util.Base64
  * anyone recover it. One user's credentials still have to share a single handle.
  */
 class UserHandleTest {
-
     private val urlDecoder = Base64.getUrlDecoder()
 
-    private fun handleFor(harness: CeremonyHarness, username: String): String =
+    private fun handleFor(
+        harness: CeremonyHarness,
+        username: String,
+    ): String =
         harness.registrationService
             .createOptions(RegistrationOptionsRequest(username = username))
             .user.id
@@ -39,8 +41,11 @@ class UserHandleTest {
         val handle = handleFor(harness, username)
         val decoded = urlDecoder.decode(handle)
 
-        val legacy = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(username.toByteArray(Charsets.UTF_8))
+        val legacy =
+            Base64
+                .getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(username.toByteArray(Charsets.UTF_8))
         assertNotEquals(legacy, handle, "handle must not be the base64 of the username")
         assertFalse(
             String(decoded, Charsets.ISO_8859_1).contains(username),

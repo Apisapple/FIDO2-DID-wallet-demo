@@ -30,28 +30,40 @@ import org.mockito.kotlin.whenever
 import java.util.Base64
 
 class AuthenticationServiceTest {
-
-    private val rpProperties = WebAuthnRpProperties(
-        id = "localhost",
-        name = "Demo",
-        origins = setOf("http://localhost:8080"),
-    )
+    private val rpProperties =
+        WebAuthnRpProperties(
+            id = "localhost",
+            name = "Demo",
+            origins = setOf("http://localhost:8080"),
+        )
     private val userKeyRepository: UserKeyRepository = mock()
     private val challengeStore: ChallengeStore = mock()
     private val webAuthnManager: WebAuthnManager = mock()
 
-    private val service = AuthenticationService(
-        rpProperties, userKeyRepository, challengeStore, webAuthnManager
-    )
+    private val service =
+        AuthenticationService(
+            rpProperties,
+            userKeyRepository,
+            challengeStore,
+            webAuthnManager,
+        )
 
     private val rp = RpEntity(id = "localhost", name = "Demo")
 
     @Test
     fun `createOptions generates unique challenges`() {
-        val existing = UserKeyEntity.builder()
-            .rpEntity(rp).userId("u1").username("alice").userDisplayName("Alice")
-            .aaguid("").credentialId("cred-123").publicKey("key").signatureAlgorithm(-7)
-            .build()
+        val existing =
+            UserKeyEntity
+                .builder()
+                .rpEntity(rp)
+                .userId("u1")
+                .username("alice")
+                .userDisplayName("Alice")
+                .aaguid("")
+                .credentialId("cred-123")
+                .publicKey("key")
+                .signatureAlgorithm(-7)
+                .build()
         whenever(userKeyRepository.findAllByUsername("alice")).thenReturn(listOf(existing))
 
         val resp1 = service.createOptions(AuthenticationOptionsRequest(username = "alice"))
@@ -62,10 +74,18 @@ class AuthenticationServiceTest {
 
     @Test
     fun `createOptions challenge is valid base64url`() {
-        val existing = UserKeyEntity.builder()
-            .rpEntity(rp).userId("u1").username("bob").userDisplayName("Bob")
-            .aaguid("").credentialId("cred-123").publicKey("key").signatureAlgorithm(-7)
-            .build()
+        val existing =
+            UserKeyEntity
+                .builder()
+                .rpEntity(rp)
+                .userId("u1")
+                .username("bob")
+                .userDisplayName("Bob")
+                .aaguid("")
+                .credentialId("cred-123")
+                .publicKey("key")
+                .signatureAlgorithm(-7)
+                .build()
         whenever(userKeyRepository.findAllByUsername("bob")).thenReturn(listOf(existing))
 
         val resp = service.createOptions(AuthenticationOptionsRequest(username = "bob"))
@@ -76,11 +96,19 @@ class AuthenticationServiceTest {
 
     @Test
     fun `createOptions populates allowCredentials with transports for known user`() {
-        val cred = UserKeyEntity.builder()
-            .rpEntity(rp).userId("u1").username("carol").userDisplayName("Carol")
-            .aaguid("").credentialId("cred-abc").publicKey("key").signatureAlgorithm(-7)
-            .transports(mutableListOf(AuthenticatorTransportEntity("internal")))
-            .build()
+        val cred =
+            UserKeyEntity
+                .builder()
+                .rpEntity(rp)
+                .userId("u1")
+                .username("carol")
+                .userDisplayName("Carol")
+                .aaguid("")
+                .credentialId("cred-abc")
+                .publicKey("key")
+                .signatureAlgorithm(-7)
+                .transports(mutableListOf(AuthenticatorTransportEntity("internal")))
+                .build()
         whenever(userKeyRepository.findAllByUsername("carol")).thenReturn(listOf(cred))
 
         val resp = service.createOptions(AuthenticationOptionsRequest(username = "carol"))
@@ -127,14 +155,16 @@ class AuthenticationServiceTest {
         whenever(challengeStore.consumeAuthentication(challengeBase64)).thenReturn(null)
 
         val credId = Base64.getUrlEncoder().withoutPadding().encodeToString("cred-123".toByteArray())
-        val req = PublicKeyCredentialGetResultDto(
-            id = credId,
-            response = AuthenticatorAssertionResponseDto(
-                clientDataJSON = clientDataBase64,
-                authenticatorData = Base64.getUrlEncoder().encodeToString(ByteArray(37)),
-                signature = Base64.getUrlEncoder().encodeToString(ByteArray(64)),
-            ),
-        )
+        val req =
+            PublicKeyCredentialGetResultDto(
+                id = credId,
+                response =
+                    AuthenticatorAssertionResponseDto(
+                        clientDataJSON = clientDataBase64,
+                        authenticatorData = Base64.getUrlEncoder().encodeToString(ByteArray(37)),
+                        signature = Base64.getUrlEncoder().encodeToString(ByteArray(64)),
+                    ),
+            )
 
         assertThrows<AuthenticationChallengeNotFoundException> {
             service.verify(req)

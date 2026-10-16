@@ -40,35 +40,38 @@ import java.util.Optional
  * end to end in [UserPresenceVerificationTest].
  */
 class RegistrationFlagParametersTest {
-
     private val rp = RpEntity(id = "localhost", name = "Fixture RP")
 
     private fun captureParameters(advertisedUserVerification: String): RegistrationParameters {
-        val rpRepository = mock<com.raonsecure.demoserver.base.repository.RpRepository>().also {
-            whenever(it.findById("localhost")).thenReturn(Optional.of(rp))
-        }
+        val rpRepository =
+            mock<com.raonsecure.demoserver.base.repository.RpRepository>().also {
+                whenever(it.findById("localhost")).thenReturn(Optional.of(rp))
+            }
         val challengeStore = InMemoryChallengeStore()
         val webAuthnManager: WebAuthnManager = mock()
-        val service = RegistrationService(
-            WebAuthnRpProperties(
-                id = CeremonyFixture.DEFAULT_RP_ID,
-                name = "Fixture RP",
-                origins = setOf(CeremonyFixture.DEFAULT_ORIGIN),
-            ),
-            rpRepository,
-            fakeUserKeyRepository(),
-            challengeStore,
-            webAuthnManager,
-        )
-
-        val options = service.createOptions(
-            RegistrationOptionsRequest(
-                username = "alice",
-                authenticatorSelection = AuthenticatorSelectionCriteria(
-                    userVerification = advertisedUserVerification,
+        val service =
+            RegistrationService(
+                WebAuthnRpProperties(
+                    id = CeremonyFixture.DEFAULT_RP_ID,
+                    name = "Fixture RP",
+                    origins = setOf(CeremonyFixture.DEFAULT_ORIGIN),
                 ),
-            ),
-        )
+                rpRepository,
+                fakeUserKeyRepository(),
+                challengeStore,
+                webAuthnManager,
+            )
+
+        val options =
+            service.createOptions(
+                RegistrationOptionsRequest(
+                    username = "alice",
+                    authenticatorSelection =
+                        AuthenticatorSelectionCriteria(
+                            userVerification = advertisedUserVerification,
+                        ),
+                ),
+            )
 
         // Real ceremony bytes, so parse() yields the challenge the service looks up; verify() is
         // stubbed because this test is about what the service asks for, not what webauthn4j does.
@@ -92,10 +95,11 @@ class RegistrationFlagParametersTest {
                 PublicKeyCredentialCreateResultDto(
                     id = created.credentialId,
                     rawId = created.credentialId,
-                    response = AuthenticatorAttestationResponseDto(
-                        clientDataJSON = created.clientDataJSON,
-                        attestationObject = created.attestationObject,
-                    ),
+                    response =
+                        AuthenticatorAttestationResponseDto(
+                            clientDataJSON = created.clientDataJSON,
+                            attestationObject = created.attestationObject,
+                        ),
                 ),
             )
         }

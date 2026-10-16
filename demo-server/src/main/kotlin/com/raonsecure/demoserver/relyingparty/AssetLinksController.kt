@@ -13,18 +13,20 @@ import org.springframework.web.bind.annotation.RestController
  * endpoint takes no credential.
  */
 @RestController
-class AssetLinksController(private val rpProperties: WebAuthnRpProperties) {
-
+class AssetLinksController(
+    private val rpProperties: WebAuthnRpProperties,
+) {
     @GetMapping("/.well-known/assetlinks.json", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun assetLinks(): ResponseEntity<List<AssetLinkStatement>> =
         ResponseEntity.ok(
             rpProperties.androidApps.map { app ->
                 AssetLinkStatement(
                     relation = listOf(LOGIN_CREDS_RELATION),
-                    target = AssetLinkTarget(
-                        packageName = app.packageName,
-                        sha256CertFingerprints = app.sha256CertFingerprints,
-                    ),
+                    target =
+                        AssetLinkTarget(
+                            packageName = app.packageName,
+                            sha256CertFingerprints = app.sha256CertFingerprints,
+                        ),
                 )
             },
         )

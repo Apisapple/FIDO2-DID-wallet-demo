@@ -15,28 +15,33 @@ import org.junit.jupiter.api.Test
  * unknown rather than false.
  */
 class ResidentKeyStateTest {
-
     private fun registerReporting(
         harness: CeremonyHarness,
         username: String,
         clientExtensionOutput: Map<String, Any>?,
     ) {
-        val options = harness.registrationService.createOptions(
-            RegistrationOptionsRequest(username = username),
-        )
-        val created = harness.fixture.register(
-            challenge = options.challenge,
-            username = username,
-            userHandle = java.util.Base64.getUrlDecoder().decode(options.user.id),
-        )
+        val options =
+            harness.registrationService.createOptions(
+                RegistrationOptionsRequest(username = username),
+            )
+        val created =
+            harness.fixture.register(
+                challenge = options.challenge,
+                username = username,
+                userHandle =
+                    java.util.Base64
+                        .getUrlDecoder()
+                        .decode(options.user.id),
+            )
         harness.registrationService.verify(
             PublicKeyCredentialCreateResultDto(
                 id = created.credentialId,
                 rawId = created.credentialId,
-                response = AuthenticatorAttestationResponseDto(
-                    clientDataJSON = created.clientDataJSON,
-                    attestationObject = created.attestationObject,
-                ),
+                response =
+                    AuthenticatorAttestationResponseDto(
+                        clientDataJSON = created.clientDataJSON,
+                        attestationObject = created.attestationObject,
+                    ),
                 clientExtensionOutput = clientExtensionOutput,
             ),
         )
@@ -46,9 +51,10 @@ class ResidentKeyStateTest {
     fun `options request the credProps extension`() {
         val harness = CeremonyHarness()
 
-        val options = harness.registrationService.createOptions(
-            RegistrationOptionsRequest(username = "alice"),
-        )
+        val options =
+            harness.registrationService.createOptions(
+                RegistrationOptionsRequest(username = "alice"),
+            )
 
         assertEquals(true, options.extensions?.get("credProps"))
     }

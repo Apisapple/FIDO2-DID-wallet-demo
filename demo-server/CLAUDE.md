@@ -25,6 +25,12 @@ FIDO2 WebAuthn demo server — a Spring Boot backend implementing FIDO2 credenti
 
 # Run a specific test method
 ./gradlew test --tests "com.raonsecure.demoserver.DemoServerApplicationTests.contextLoads"
+
+# Lint check (ktlint)
+./gradlew ktlintCheck
+
+# Auto-format Kotlin code (ktlint)
+./gradlew ktlintFormat
 ```
 
 ## Tech Stack
@@ -76,3 +82,4 @@ The core FIDO2 domain is:
 - Entity `id` fields use `var` (not `val`) to satisfy JPA proxy requirements.
 - `UserKeyEntity` exposes a nested `Builder` class — use it when constructing instances with many fields.
 - Kotlin compiler flags: `-Xjsr305=strict` (null-safety for Spring annotations) and `-Xannotation-default-target=param-property`.
+- Code formatting & linting: Ktlint via `./gradlew ktlintFormat` and `./gradlew ktlintCheck`.

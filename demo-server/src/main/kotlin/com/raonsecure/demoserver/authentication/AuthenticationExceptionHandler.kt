@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice(basePackageClasses = [AuthenticationController::class])
 class AuthenticationExceptionHandler {
-
     @ExceptionHandler(AuthenticationChallengeNotFoundException::class)
     fun handleChallengeNotFound(e: AuthenticationChallengeNotFoundException): ResponseEntity<WebAuthnVerificationResponse> =
         ResponseEntity.ok(WebAuthnVerificationResponse(success = false, message = e.message))

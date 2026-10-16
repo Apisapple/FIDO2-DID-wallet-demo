@@ -18,15 +18,15 @@ import org.springframework.context.annotation.Configuration
  * collides with the other context-loading tests.
  */
 class ApplicationYamlRpConfigTest {
-
     @Configuration
     @EnableConfigurationProperties(WebAuthnRpProperties::class)
     class PropertiesOnlyConfig
 
-    private val runner = ApplicationContextRunner()
-        .withUserConfiguration(PropertiesOnlyConfig::class.java)
-        .withInitializer(ConfigDataApplicationContextInitializer())
-        .withPropertyValues("spring.profiles.active=rp-defaults")
+    private val runner =
+        ApplicationContextRunner()
+            .withUserConfiguration(PropertiesOnlyConfig::class.java)
+            .withInitializer(ConfigDataApplicationContextInitializer())
+            .withPropertyValues("spring.profiles.active=rp-defaults")
 
     @Test
     fun `shipped configuration binds the relying party identity`() {

@@ -54,10 +54,12 @@ class RegistrationService(
     private val collectedClientDataConverter = CollectedClientDataConverter(ObjectConverter())
 
     fun createOptions(request: RegistrationOptionsRequest): RegistrationDataResponse {
-        val rp = rpRepository.findById(rpProperties.id).orElseThrow {
-            IllegalStateException("RP not configured: ${rpProperties.id}")
-        }
+        val rp =
+            rpRepository.findById(rpProperties.id).orElseThrow {
+                IllegalStateException("RP not configured: ${rpProperties.id}")
+            }
 
+        // Create secure random challenge
         val challengeBytes = ByteArray(32).also { random.nextBytes(it) }
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeBytes)
 
@@ -67,34 +69,40 @@ class RegistrationService(
         // One value drives both the advertised selection criteria and the stored policy, so
         // verification cannot enforce something different from what the client was told.
         val authenticatorSelection = request.authenticatorSelection ?: AuthenticatorSelectionCriteria()
-        val userVerification = authenticatorSelection.userVerification
-            ?: UserVerificationRequirement.PREFERRED.value
+        val userVerification =
+            authenticatorSelection.userVerification
+                ?: UserVerificationRequirement.PREFERRED.value
 
-        val context = PendingRegistrationContext(
-            username = request.requiredUsername,
-            userId = userId,
-            userDisplayName = displayName,
-            challenge = challenge,
-            userVerification = userVerification,
-        )
+        val context =
+            PendingRegistrationContext(
+                username = request.requiredUsername,
+                userId = userId,
+                userDisplayName = displayName,
+                challenge = challenge,
+                userVerification = userVerification,
+            )
         challengeStore.save(challenge, context, challengeTtl)
 
-        val existingCredentials = userKeyRepository.findAllByUsername(request.requiredUsername)
-            .map { PublicKeyCredentialDescriptor(id = it.credentialId) }
-            .ifEmpty { null }
+        val existingCredentials =
+            userKeyRepository
+                .findAllByUsername(request.requiredUsername)
+                .map { PublicKeyCredentialDescriptor(id = it.credentialId) }
+                .ifEmpty { null }
 
         return RegistrationDataResponse(
             rp = PublicKeyCredentialRpEntity(id = rp.id, name = rp.name),
-            user = PublicKeyCredentialUserEntity(
-                id = userId,
-                displayName = displayName,
-                name = request.requiredUsername,
-            ),
+            user =
+                PublicKeyCredentialUserEntity(
+                    id = userId,
+                    displayName = displayName,
+                    name = request.requiredUsername,
+                ),
             challenge = challenge,
-            pubKeyCredParams = listOf(
-                PublicKeyCredentialParams(alg = -7L),   // ES256
-                PublicKeyCredentialParams(alg = -257L), // RS256
-            ),
+            pubKeyCredParams =
+                listOf(
+                    PublicKeyCredentialParams(alg = -7L), // ES256
+                    PublicKeyCredentialParams(alg = -257L), // RS256
+                ),
             timeout = 60_000L,
             excludeCredentials = existingCredentials,
             authenticatorSelection = authenticatorSelection.copy(userVerification = userVerification),
@@ -119,32 +127,37 @@ class RegistrationService(
         // The challenge is read and consumed before the attestation is parsed, so a verification
         // attempt that fails during parsing still burns the challenge. Reading it from the parsed
         // result instead would leave a replayable challenge behind whenever parsing threw.
-        val collectedClientData = try {
-            collectedClientDataConverter.convert(clientDataBytes)
-        } catch (e: Exception) {
-            throw RegistrationVerificationException("Failed to parse clientDataJSON: ${e.message}", e)
-        }
+        val collectedClientData =
+            try {
+                collectedClientDataConverter.convert(clientDataBytes)
+            } catch (e: Exception) {
+                throw RegistrationVerificationException("Failed to parse clientDataJSON: ${e.message}", e)
+            }
 
-        val challengeValue = collectedClientData?.challenge?.value
-            ?: throw RegistrationVerificationException("Missing challenge in clientData")
+        val challengeValue =
+            collectedClientData?.challenge?.value
+                ?: throw RegistrationVerificationException("Missing challenge in clientData")
         val challengeStr = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeValue)
 
-        val pendingCtx = challengeStore.consume(challengeStr)
-            ?: throw ChallengeNotFoundException(challengeStr)
+        val pendingCtx =
+            challengeStore.consume(challengeStr)
+                ?: throw ChallengeNotFoundException(challengeStr)
 
         try {
             webAuthnManager.parse(
-                RegistrationRequest(attestationBytes, clientDataBytes, null, transports)
+                RegistrationRequest(attestationBytes, clientDataBytes, null, transports),
             )
         } catch (e: Exception) {
             throw RegistrationVerificationException("Failed to parse attestation: ${e.message}", e)
         }
 
-        val serverProperty = ServerProperty.builder()
-            .origins(rpProperties.origins.map { Origin.create(it) }.toSet())
-            .rpId(rpProperties.id)
-            .challenge(DefaultChallenge(Base64.getUrlDecoder().decode(pendingCtx.challenge)))
-            .build()
+        val serverProperty =
+            ServerProperty
+                .builder()
+                .origins(rpProperties.origins.map { Origin.create(it) }.toSet())
+                .rpId(rpProperties.id)
+                .challenge(DefaultChallenge(Base64.getUrlDecoder().decode(pendingCtx.challenge)))
+                .build()
 
         // User presence is always required; user verification is required only when the options
         // advertised it. Parameter order is (serverProperty, pubKeyCredParams,
@@ -152,54 +165,63 @@ class RegistrationService(
         val userVerificationRequired =
             pendingCtx.userVerification == UserVerificationRequirement.REQUIRED.value
 
-        val registrationData = try {
-            webAuthnManager.verify(
-                RegistrationRequest(attestationBytes, clientDataBytes, null, transports),
-                RegistrationParameters(serverProperty, null, userVerificationRequired, true),
-            )
-        } catch (e: Exception) {
-            throw RegistrationVerificationException("Attestation verification failed: ${e.message}", e)
-        }
+        val registrationData =
+            try {
+                webAuthnManager.verify(
+                    RegistrationRequest(attestationBytes, clientDataBytes, null, transports),
+                    RegistrationParameters(serverProperty, null, userVerificationRequired, true),
+                )
+            } catch (e: Exception) {
+                throw RegistrationVerificationException("Attestation verification failed: ${e.message}", e)
+            }
 
         val authData = registrationData.attestationObject?.authenticatorData
-        val attestedData = authData?.attestedCredentialData
-            ?: throw RegistrationVerificationException("Missing attested credential data")
+        val attestedData =
+            authData?.attestedCredentialData
+                ?: throw RegistrationVerificationException("Missing attested credential data")
 
         val coseKey = attestedData.coseKey
-        val publicKeyBytes = coseKey.getPublicKey()?.encoded
-            ?: throw RegistrationVerificationException("Cannot extract public key")
+        val publicKeyBytes =
+            coseKey.getPublicKey()?.encoded
+                ?: throw RegistrationVerificationException("Cannot extract public key")
 
-        val aaguid = attestedData.aaguid?.value?.toString() ?: ""
+        val aaguid = attestedData.aaguid.value?.toString() ?: ""
         val signCount = authData.signCount
         val alg = (coseKey.algorithm?.value ?: -7L).toInt()
 
-        val rp = rpRepository.findById(rpProperties.id).orElseThrow {
-            IllegalStateException("RP not found")
-        }
+        val rp =
+            rpRepository.findById(rpProperties.id).orElseThrow {
+                IllegalStateException("RP not found")
+            }
 
-        val transportEntities = transports?.map { AuthenticatorTransportEntity(it) }?.toMutableList()
-            ?: mutableListOf()
+        val transportEntities =
+            transports
+                .orEmpty()
+                .map { AuthenticatorTransportEntity(it) }
 
-        val entity = UserKeyEntity.builder()
-            .rpEntity(rp)
-            .userId(pendingCtx.userId)
-            .username(pendingCtx.username)
-            .userDisplayName(pendingCtx.userDisplayName)
-            .aaguid(aaguid)
-            .credentialId(credentialIdRaw)
-            .publicKey(Base64.getEncoder().encodeToString(publicKeyBytes))
-            .signatureAlgorithm(alg)
-            .signCounter(signCount)
-            .attestationType(resolveAttestationType(registrationData))
-            .rk(resolveResidentKey(result))
-            .registeredTimestamp(Date())
-            .build()
+        val entity =
+            UserKeyEntity
+                .builder()
+                .rpEntity(rp)
+                .userId(pendingCtx.userId)
+                .username(pendingCtx.username)
+                .userDisplayName(pendingCtx.userDisplayName)
+                .aaguid(aaguid)
+                .credentialId(credentialIdRaw)
+                .publicKey(Base64.getEncoder().encodeToString(publicKeyBytes))
+                .signatureAlgorithm(alg)
+                .signCounter(signCount)
+                .attestationType(resolveAttestationType(registrationData))
+                .rk(resolveResidentKey(result))
+                .registeredTimestamp(Date())
+                .build()
 
         userKeyRepository.save(entity)
 
-        transportEntities.forEach { it.link(entity) }
         if (transportEntities.isNotEmpty()) {
-            userKeyRepository.save(entity.apply { this.transports = transportEntities })
+            transportEntities.forEach { it.link(entity) }
+            entity.transports.addAll(transportEntities)
+            userKeyRepository.save(entity)
         }
     }
 
@@ -223,15 +245,26 @@ class RegistrationService(
      * Trust-chain validation is out of scope, so no attempt is made to distinguish ATT_CA.
      */
     private fun resolveAttestationType(registrationData: RegistrationData): AttestationType {
-        val statement = registrationData.attestationObject?.attestationStatement
-            ?: return AttestationType.NONE
+        val statement =
+            registrationData.attestationObject?.attestationStatement
+                ?: return AttestationType.NONE
 
         return when (statement) {
-            is NoneAttestationStatement -> AttestationType.NONE
-            is AppleAnonymousAttestationStatement -> AttestationType.ANON_CA
-            is CertificateBaseAttestationStatement ->
+            is NoneAttestationStatement -> {
+                AttestationType.NONE
+            }
+
+            is AppleAnonymousAttestationStatement -> {
+                AttestationType.ANON_CA
+            }
+
+            is CertificateBaseAttestationStatement -> {
                 if (statement.x5c == null) AttestationType.SELF else AttestationType.BASIC
-            else -> AttestationType.BASIC
+            }
+
+            else -> {
+                AttestationType.BASIC
+            }
         }
     }
 
@@ -242,8 +275,9 @@ class RegistrationService(
      * nothing here makes an authorization decision from it.
      */
     private fun resolveResidentKey(result: PublicKeyCredentialCreateResultDto): Boolean? {
-        val credProps = result.clientExtensionOutput?.get(CRED_PROPS_EXTENSION) as? Map<*, *>
-            ?: return null
+        val credProps =
+            result.clientExtensionOutput?.get(CRED_PROPS_EXTENSION) as? Map<*, *>
+                ?: return null
         return credProps["rk"] as? Boolean
     }
 

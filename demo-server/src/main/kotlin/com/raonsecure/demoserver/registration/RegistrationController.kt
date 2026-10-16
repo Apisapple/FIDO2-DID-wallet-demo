@@ -12,13 +12,16 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/attestation")
-class RegistrationController(private val registrationService: RegistrationService) {
-
+class RegistrationController(
+    private val registrationService: RegistrationService,
+) {
     @PostMapping("/options")
-    fun options(@RequestBody request: RegistrationOptionsRequest): ResponseEntity<Any> {
+    fun options(
+        @RequestBody request: RegistrationOptionsRequest,
+    ): ResponseEntity<Any> {
         if (request.username.isNullOrBlank()) {
             return ResponseEntity.badRequest().body(
-                WebAuthnVerificationResponse(success = false, message = "username is required")
+                WebAuthnVerificationResponse(success = false, message = "username is required"),
             )
         }
         val options = registrationService.createOptions(request)
@@ -26,10 +29,12 @@ class RegistrationController(private val registrationService: RegistrationServic
     }
 
     @PostMapping("/result")
-    fun result(@RequestBody result: PublicKeyCredentialCreateResultDto): ResponseEntity<Any> {
+    fun result(
+        @RequestBody result: PublicKeyCredentialCreateResultDto,
+    ): ResponseEntity<Any> {
         registrationService.verify(result)
         return ResponseEntity.ok(
-            WebAuthnVerificationResponse(success = true, message = "Registration successful")
+            WebAuthnVerificationResponse(success = true, message = "Registration successful"),
         )
     }
 }

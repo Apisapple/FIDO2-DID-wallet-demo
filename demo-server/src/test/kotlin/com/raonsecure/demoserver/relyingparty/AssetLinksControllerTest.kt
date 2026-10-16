@@ -2,17 +2,16 @@ package com.raonsecure.demoserver.relyingparty
 
 import com.raonsecure.demoserver.config.WebAuthnRpProperties
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.mockito.kotlin.whenever
 
 @WebMvcTest(controllers = [AssetLinksController::class])
 class AssetLinksControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 

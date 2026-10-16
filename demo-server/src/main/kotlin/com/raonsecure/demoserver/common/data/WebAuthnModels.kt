@@ -4,13 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
 import java.util.Base64
 
-enum class PublicKeyCredentialType(@JsonValue val value: String) {
+enum class PublicKeyCredentialType(
+    @JsonValue val value: String,
+) {
     PUBLIC_KEY("public-key"),
     ;
 
     companion object {
-        fun fromValue(value: String): PublicKeyCredentialType? =
-            entries.find { it.value.equals(value, ignoreCase = true) }
+        fun fromValue(value: String): PublicKeyCredentialType? = entries.find { it.value.equals(value, ignoreCase = true) }
     }
 }
 
@@ -19,7 +20,10 @@ data class Credential(
     val type: PublicKeyCredentialType,
 )
 
-enum class COSEAlgorithm(val value: Long, val jcaName: String) {
+enum class COSEAlgorithm(
+    val value: Long,
+    val jcaName: String,
+) {
     ES256(-7L, "SHA256withECDSA"),
     ES384(-35L, "SHA384withECDSA"),
     ES512(-36L, "SHA512withECDSA"),
@@ -37,7 +41,9 @@ enum class COSEAlgorithm(val value: Long, val jcaName: String) {
     }
 }
 
-enum class AttestationConveyancePreference(@JsonValue val value: String) {
+enum class AttestationConveyancePreference(
+    @JsonValue val value: String,
+) {
     NONE("none"),
     INDIRECT("indirect"),
     DIRECT("direct"),
@@ -45,24 +51,26 @@ enum class AttestationConveyancePreference(@JsonValue val value: String) {
     ;
 
     companion object {
-        fun fromValue(value: String): AttestationConveyancePreference? =
-            entries.find { it.value.equals(value, ignoreCase = true) }
+        fun fromValue(value: String): AttestationConveyancePreference? = entries.find { it.value.equals(value, ignoreCase = true) }
     }
 }
 
-enum class UserVerificationRequirement(@JsonValue val value: String) {
+enum class UserVerificationRequirement(
+    @JsonValue val value: String,
+) {
     REQUIRED("required"),
     PREFERRED("preferred"),
     DISCOURAGED("discouraged"),
     ;
 
     companion object {
-        fun fromValue(value: String): UserVerificationRequirement? =
-            entries.find { it.value.equals(value, ignoreCase = true) }
+        fun fromValue(value: String): UserVerificationRequirement? = entries.find { it.value.equals(value, ignoreCase = true) }
     }
 }
 
-enum class AuthenticatorTransport(@JsonValue val value: String) {
+enum class AuthenticatorTransport(
+    @JsonValue val value: String,
+) {
     USB("usb"),
     NFC("nfc"),
     BLE("ble"),
@@ -72,8 +80,7 @@ enum class AuthenticatorTransport(@JsonValue val value: String) {
     ;
 
     companion object {
-        fun fromValue(value: String): AuthenticatorTransport? =
-            entries.find { it.value.equals(value, ignoreCase = true) }
+        fun fromValue(value: String): AuthenticatorTransport? = entries.find { it.value.equals(value, ignoreCase = true) }
     }
 }
 

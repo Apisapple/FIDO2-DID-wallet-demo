@@ -10,8 +10,8 @@ import com.raonsecure.demoserver.registration.challenge.ChallengeStore
 import com.raonsecure.demoserver.registration.challenge.PendingRegistrationContext
 import com.webauthn4j.WebAuthnManager
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -19,24 +19,29 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import java.util.Optional
 import java.util.Base64
+import java.util.Optional
 
 class RegistrationServiceTest {
-
-    private val rpProperties = WebAuthnRpProperties(
-        id = "localhost",
-        name = "Demo",
-        origins = setOf("http://localhost:8080"),
-    )
+    private val rpProperties =
+        WebAuthnRpProperties(
+            id = "localhost",
+            name = "Demo",
+            origins = setOf("http://localhost:8080"),
+        )
     private val rpRepository: RpRepository = mock()
     private val userKeyRepository: UserKeyRepository = mock()
     private val challengeStore: ChallengeStore = mock()
     private val webAuthnManager: WebAuthnManager = mock()
 
-    private val service = RegistrationService(
-        rpProperties, rpRepository, userKeyRepository, challengeStore, webAuthnManager
-    )
+    private val service =
+        RegistrationService(
+            rpProperties,
+            rpRepository,
+            userKeyRepository,
+            challengeStore,
+            webAuthnManager,
+        )
 
     private val rp = RpEntity(id = "localhost", name = "Demo")
 
@@ -64,10 +69,18 @@ class RegistrationServiceTest {
 
     @Test
     fun `createOptions includes excludeCredentials for existing user`() {
-        val existing = UserKeyEntity.builder()
-            .rpEntity(rp).userId("u1").username("carol").userDisplayName("Carol")
-            .aaguid("").credentialId("cred-abc").publicKey("key").signatureAlgorithm(-7)
-            .build()
+        val existing =
+            UserKeyEntity
+                .builder()
+                .rpEntity(rp)
+                .userId("u1")
+                .username("carol")
+                .userDisplayName("Carol")
+                .aaguid("")
+                .credentialId("cred-abc")
+                .publicKey("key")
+                .signatureAlgorithm(-7)
+                .build()
         whenever(rpRepository.findById("localhost")).thenReturn(Optional.of(rp))
         whenever(userKeyRepository.findAllByUsername("carol")).thenReturn(listOf(existing))
 

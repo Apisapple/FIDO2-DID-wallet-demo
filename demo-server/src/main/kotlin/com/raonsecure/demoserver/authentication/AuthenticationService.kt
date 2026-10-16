@@ -57,22 +57,25 @@ class AuthenticationService(
 
     fun createOptions(request: AuthenticationOptionsRequest): AuthenticationDataResponse {
         val username = request.username?.trim()
-        val matchingCredentials: List<UserKeyEntity> = if (!username.isNullOrEmpty()) {
-            val creds = userKeyRepository.findAllByUsername(username)
-            if (creds.isEmpty()) {
-                throw CredentialNotFoundException("No credentials registered for user: $username")
+        val matchingCredentials: List<UserKeyEntity> =
+            if (!username.isNullOrEmpty()) {
+                val creds = userKeyRepository.findAllByUsername(username)
+                if (creds.isEmpty()) {
+                    throw CredentialNotFoundException("No credentials registered for user: $username")
+                }
+                creds
+            } else {
+                emptyList()
             }
-            creds
-        } else {
-            emptyList()
-        }
 
-        val allowCredentials = matchingCredentials.map { cred ->
-            PublicKeyCredentialDescriptor(
-                id = cred.credentialId,
-                transports = cred.transports.map { it.transport }.ifEmpty { null },
-            )
-        }.ifEmpty { null }
+        val allowCredentials =
+            matchingCredentials
+                .map { cred ->
+                    PublicKeyCredentialDescriptor(
+                        id = cred.credentialId,
+                        transports = cred.transports.map { it.transport }.ifEmpty { null },
+                    )
+                }.ifEmpty { null }
 
         val challengeBytes = ByteArray(32).also { random.nextBytes(it) }
         val challenge = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeBytes)
@@ -81,13 +84,14 @@ class AuthenticationService(
         // verification cannot enforce something different from what the client was told.
         val userVerification = request.userVerification ?: UserVerificationRequirement.PREFERRED.value
 
-        val context = PendingAuthenticationContext(
-            username = username,
-            challenge = challenge,
-            credentialIds = matchingCredentials.map { it.credentialId },
-            userVerification = userVerification,
-            usernameProvided = !username.isNullOrEmpty(),
-        )
+        val context =
+            PendingAuthenticationContext(
+                username = username,
+                challenge = challenge,
+                credentialIds = matchingCredentials.map { it.credentialId },
+                userVerification = userVerification,
+                usernameProvided = !username.isNullOrEmpty(),
+            )
         challengeStore.saveAuthentication(challenge, context, challengeTtl)
 
         return AuthenticationDataResponse(
@@ -109,29 +113,33 @@ class AuthenticationService(
         val signatureBytes = Base64.getUrlDecoder().decode(result.response.signature)
         val userHandleBytes = result.response.userHandle?.let { Base64.getUrlDecoder().decode(it) }
 
-        val authRequest = AuthenticationRequest(
-            credentialIdBytes,
-            userHandleBytes,
-            authDataBytes,
-            clientDataBytes,
-            signatureBytes,
-        )
+        val authRequest =
+            AuthenticationRequest(
+                credentialIdBytes,
+                userHandleBytes,
+                authDataBytes,
+                clientDataBytes,
+                signatureBytes,
+            )
 
         // The challenge is read and consumed before the assertion is parsed, so a verification
         // attempt that fails during parsing still burns the challenge. Reading it from the parsed
         // result instead would leave a replayable challenge behind whenever parsing threw.
-        val collectedClientData = try {
-            collectedClientDataConverter.convert(clientDataBytes)
-        } catch (e: Exception) {
-            throw AuthenticationVerificationException("Failed to parse clientDataJSON: ${e.message}", e)
-        }
+        val collectedClientData =
+            try {
+                collectedClientDataConverter.convert(clientDataBytes)
+            } catch (e: Exception) {
+                throw AuthenticationVerificationException("Failed to parse clientDataJSON: ${e.message}", e)
+            }
 
-        val challengeValue = collectedClientData?.challenge?.value
-            ?: throw AuthenticationVerificationException("Missing challenge in clientData")
+        val challengeValue =
+            collectedClientData?.challenge?.value
+                ?: throw AuthenticationVerificationException("Missing challenge in clientData")
         val challengeStr = Base64.getUrlEncoder().withoutPadding().encodeToString(challengeValue)
 
-        val pendingCtx = challengeStore.consumeAuthentication(challengeStr)
-            ?: throw AuthenticationChallengeNotFoundException(challengeStr)
+        val pendingCtx =
+            challengeStore.consumeAuthentication(challengeStr)
+                ?: throw AuthenticationChallengeNotFoundException(challengeStr)
 
         try {
             webAuthnManager.parse(authRequest)
@@ -139,8 +147,9 @@ class AuthenticationService(
             throw AuthenticationVerificationException("Failed to parse assertion: ${e.message}", e)
         }
 
-        val userKey = userKeyRepository.findByCredentialId(credentialIdRaw)
-            ?: throw CredentialNotFoundException(credentialIdRaw)
+        val userKey =
+            userKeyRepository.findByCredentialId(credentialIdRaw)
+                ?: throw CredentialNotFoundException(credentialIdRaw)
 
         if (pendingCtx.credentialIds.isNotEmpty() && !pendingCtx.credentialIds.contains(credentialIdRaw)) {
             throw AuthenticationVerificationException("Credential ID $credentialIdRaw is not in allowed credentials")
@@ -163,45 +172,50 @@ class AuthenticationService(
         val coseKey = restoreCoseKey(userKey)
         val aaguid = if (userKey.aaguid.isNotBlank()) AAGUID(userKey.aaguid) else AAGUID.ZERO
         val attestedCredentialData = AttestedCredentialData(aaguid, credentialIdBytes, coseKey)
-        val credentialRecord = CredentialRecordImpl(
-            null,
-            null,
-            null,
-            null,
-            userKey.signCounter ?: 0L,
-            attestedCredentialData,
-            null,
-            null,
-            null,
-            null,
-        )
+        val credentialRecord =
+            CredentialRecordImpl(
+                null,
+                null,
+                null,
+                null,
+                userKey.signCounter ?: 0L,
+                attestedCredentialData,
+                null,
+                null,
+                null,
+                null,
+            )
 
-        val serverProperty = ServerProperty.builder()
-            .origins(rpProperties.origins.map { Origin.create(it) }.toSet())
-            .rpId(rpProperties.id)
-            .challenge(DefaultChallenge(Base64.getUrlDecoder().decode(pendingCtx.challenge)))
-            .build()
+        val serverProperty =
+            ServerProperty
+                .builder()
+                .origins(rpProperties.origins.map { Origin.create(it) }.toSet())
+                .rpId(rpProperties.id)
+                .challenge(DefaultChallenge(Base64.getUrlDecoder().decode(pendingCtx.challenge)))
+                .build()
 
         // User presence is always required; user verification is required only when the options
         // advertised it. Parameter order is (serverProperty, credentialRecord, allowCredentials,
         // userVerificationRequired, userPresenceRequired).
-        val authParameters = AuthenticationParameters(
-            serverProperty,
-            credentialRecord,
-            null,
-            pendingCtx.userVerification == UserVerificationRequirement.REQUIRED.value,
-            true,
-        )
+        val authParameters =
+            AuthenticationParameters(
+                serverProperty,
+                credentialRecord,
+                null,
+                pendingCtx.userVerification == UserVerificationRequirement.REQUIRED.value,
+                true,
+            )
 
-        val authData = try {
-            webAuthnManager.verify(authRequest, authParameters)
-        } catch (e: MaliciousCounterValueException) {
-            // Distinguishable from other verification failures: a counter that did not advance
-            // suggests a cloned or replayed authenticator rather than a malformed assertion.
-            throw SignCounterRegressionException(e.storedCounter, e.presentedCounter)
-        } catch (e: Exception) {
-            throw AuthenticationVerificationException("Assertion verification failed: ${e.message}", e)
-        }
+        val authData =
+            try {
+                webAuthnManager.verify(authRequest, authParameters)
+            } catch (e: MaliciousCounterValueException) {
+                // Distinguishable from other verification failures: a counter that did not advance
+                // suggests a cloned or replayed authenticator rather than a malformed assertion.
+                throw SignCounterRegressionException(e.storedCounter, e.presentedCounter)
+            } catch (e: Exception) {
+                throw AuthenticationVerificationException("Assertion verification failed: ${e.message}", e)
+            }
 
         val newSignCount = authData.authenticatorData?.signCount ?: 0L
         userKey.signCounter = newSignCount

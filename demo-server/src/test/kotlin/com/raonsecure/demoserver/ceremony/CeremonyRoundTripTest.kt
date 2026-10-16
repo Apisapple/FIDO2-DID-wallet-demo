@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
  * authenticator emulator, so the parse/verify path the mocked service tests skip is covered.
  */
 class CeremonyRoundTripTest {
-
     @Test
     fun `registration then authentication succeeds end to end`() {
         val harness = CeremonyHarness()

@@ -1,9 +1,9 @@
 package com.raonsecure.demoserver.registration.challenge
 
 import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationContext
-import tools.jackson.databind.ObjectMapper
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
 import java.time.Duration
 
 @Component
@@ -11,8 +11,11 @@ class RedisChallengeStore(
     private val redisTemplate: StringRedisTemplate,
     private val objectMapper: ObjectMapper,
 ) : ChallengeStore {
-
-    override fun save(challenge: String, context: PendingRegistrationContext, ttl: Duration) {
+    override fun save(
+        challenge: String,
+        context: PendingRegistrationContext,
+        ttl: Duration,
+    ) {
         val key = "reg:challenge:$challenge"
         val value = objectMapper.writeValueAsString(context)
         redisTemplate.opsForValue().set(key, value, ttl)
@@ -24,7 +27,11 @@ class RedisChallengeStore(
         return objectMapper.readValue(value, PendingRegistrationContext::class.java)
     }
 
-    override fun saveAuthentication(challenge: String, context: PendingAuthenticationContext, ttl: Duration) {
+    override fun saveAuthentication(
+        challenge: String,
+        context: PendingAuthenticationContext,
+        ttl: Duration,
+    ) {
         val key = "auth:challenge:$challenge"
         val value = objectMapper.writeValueAsString(context)
         redisTemplate.opsForValue().set(key, value, ttl)

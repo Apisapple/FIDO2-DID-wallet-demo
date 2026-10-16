@@ -26,27 +26,28 @@ import org.mockito.kotlin.whenever
  * [AttestationTypeTest].
  */
 class AttestationTypeMappingTest {
-
-    private val service = RegistrationService(
-        WebAuthnRpProperties(
-            id = CeremonyFixture.DEFAULT_RP_ID,
-            name = "Fixture RP",
-            origins = setOf(CeremonyFixture.DEFAULT_ORIGIN),
-        ),
-        mock<RpRepository>(),
-        fakeUserKeyRepository(),
-        InMemoryChallengeStore(),
-        mock<WebAuthnManager>(),
-    )
+    private val service =
+        RegistrationService(
+            WebAuthnRpProperties(
+                id = CeremonyFixture.DEFAULT_RP_ID,
+                name = "Fixture RP",
+                origins = setOf(CeremonyFixture.DEFAULT_ORIGIN),
+            ),
+            mock<RpRepository>(),
+            fakeUserKeyRepository(),
+            InMemoryChallengeStore(),
+            mock<WebAuthnManager>(),
+        )
 
     /** Calls the private mapping through its only observable contract: the persisted value. */
     private fun mapOf(attestationObject: AttestationObject?): AttestationType {
         val data: RegistrationData = mock()
         whenever(data.attestationObject).thenReturn(attestationObject)
 
-        val method = RegistrationService::class.java
-            .getDeclaredMethod("resolveAttestationType", RegistrationData::class.java)
-            .apply { isAccessible = true }
+        val method =
+            RegistrationService::class.java
+                .getDeclaredMethod("resolveAttestationType", RegistrationData::class.java)
+                .apply { isAccessible = true }
         @Suppress("UNCHECKED_CAST")
         return method.invoke(service, data) as AttestationType
     }

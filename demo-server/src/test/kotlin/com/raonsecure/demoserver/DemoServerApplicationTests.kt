@@ -12,9 +12,7 @@ import org.springframework.test.context.ActiveProfiles
 @SpringBootTest
 @ActiveProfiles("rp-defaults")
 class DemoServerApplicationTests {
-
     @Test
     fun contextLoads() {
     }
-
 }

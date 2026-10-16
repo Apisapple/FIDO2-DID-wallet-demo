@@ -1,7 +1,10 @@
 package com.raonsecure.demoserver.testsupport
 
-import com.webauthn4j.data.AuthenticatorAssertionResponse
+import com.webauthn4j.converter.AttestationObjectConverter
+import com.webauthn4j.converter.CollectedClientDataConverter
+import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.data.AttestationConveyancePreference
+import com.webauthn4j.data.AuthenticatorAssertionResponse
 import com.webauthn4j.data.AuthenticatorAttestationResponse
 import com.webauthn4j.data.AuthenticatorSelectionCriteria
 import com.webauthn4j.data.PublicKeyCredential
@@ -20,18 +23,15 @@ import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.data.extension.client.AuthenticationExtensionClientOutput
 import com.webauthn4j.data.extension.client.RegistrationExtensionClientOutput
-import com.webauthn4j.converter.AttestationObjectConverter
-import com.webauthn4j.converter.CollectedClientDataConverter
-import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.test.EmulatorUtil
 import com.webauthn4j.test.authenticator.webauthn.GetAssertionRequest
 import com.webauthn4j.test.authenticator.webauthn.MakeCredentialRequest
-import com.webauthn4j.test.client.AuthenticationEmulationOption
-import com.webauthn4j.test.client.RegistrationEmulationOption
-import com.webauthn4j.util.MessageDigestUtil
 import com.webauthn4j.test.authenticator.webauthn.WebAuthnAuthenticatorAdaptor
 import com.webauthn4j.test.authenticator.webauthn.WebAuthnModelAuthenticator
+import com.webauthn4j.test.client.AuthenticationEmulationOption
 import com.webauthn4j.test.client.ClientPlatform
+import com.webauthn4j.test.client.RegistrationEmulationOption
+import com.webauthn4j.util.MessageDigestUtil
 import java.util.Base64
 
 /**
@@ -66,22 +66,23 @@ class CeremonyFixture(
          */
         attestation: AttestationConveyancePreference = AttestationConveyancePreference.NONE,
     ): RegistrationFixtureResult {
-        val options = PublicKeyCredentialCreationOptions(
-            PublicKeyCredentialRpEntity(rpId, "Fixture RP"),
-            PublicKeyCredentialUserEntity(userHandle, username, username),
-            DefaultChallenge(urlDecoder.decode(challenge)),
-            listOf(
-                PublicKeyCredentialParameters(
-                    PublicKeyCredentialType.PUBLIC_KEY,
-                    COSEAlgorithmIdentifier.ES256,
+        val options =
+            PublicKeyCredentialCreationOptions(
+                PublicKeyCredentialRpEntity(rpId, "Fixture RP"),
+                PublicKeyCredentialUserEntity(userHandle, username, username),
+                DefaultChallenge(urlDecoder.decode(challenge)),
+                listOf(
+                    PublicKeyCredentialParameters(
+                        PublicKeyCredentialType.PUBLIC_KEY,
+                        COSEAlgorithmIdentifier.ES256,
+                    ),
                 ),
-            ),
-            null,
-            null,
-            AuthenticatorSelectionCriteria(null, residentKey, userVerification),
-            attestation,
-            null,
-        )
+                null,
+                null,
+                AuthenticatorSelectionCriteria(null, residentKey, userVerification),
+                attestation,
+                null,
+            )
 
         val credential: PublicKeyCredential<AuthenticatorAttestationResponse, RegistrationExtensionClientOutput> =
             clientPlatform.create(options)
@@ -101,20 +102,21 @@ class CeremonyFixture(
         credentialId: String,
         userVerification: UserVerificationRequirement = UserVerificationRequirement.PREFERRED,
     ): AuthenticationFixtureResult {
-        val options = PublicKeyCredentialRequestOptions(
-            DefaultChallenge(urlDecoder.decode(challenge)),
-            null,
-            rpId,
-            listOf(
-                PublicKeyCredentialDescriptor(
-                    PublicKeyCredentialType.PUBLIC_KEY,
-                    urlDecoder.decode(credentialId),
-                    null,
+        val options =
+            PublicKeyCredentialRequestOptions(
+                DefaultChallenge(urlDecoder.decode(challenge)),
+                null,
+                rpId,
+                listOf(
+                    PublicKeyCredentialDescriptor(
+                        PublicKeyCredentialType.PUBLIC_KEY,
+                        urlDecoder.decode(credentialId),
+                        null,
+                    ),
                 ),
-            ),
-            userVerification,
-            null,
-        )
+                userVerification,
+                null,
+            )
 
         val credential: PublicKeyCredential<AuthenticatorAssertionResponse, AuthenticationExtensionClientOutput> =
             clientPlatform.get(options)
@@ -145,24 +147,26 @@ class CeremonyFixture(
         userVerified: Boolean,
     ): AuthenticationFixtureResult {
         val collectedClientData = collectedClientData(ClientDataType.WEBAUTHN_GET, challenge)
-        val clientDataBytes = CollectedClientDataConverter(ObjectConverter())
-            .convertToBytes(collectedClientData)
+        val clientDataBytes =
+            CollectedClientDataConverter(ObjectConverter())
+                .convertToBytes(collectedClientData)
         val clientDataHash = MessageDigestUtil.createSHA256().digest(clientDataBytes)
 
-        val request = GetAssertionRequest(
-            rpId,
-            clientDataHash,
-            listOf(
-                PublicKeyCredentialDescriptor(
-                    PublicKeyCredentialType.PUBLIC_KEY,
-                    urlDecoder.decode(credentialId),
-                    null,
+        val request =
+            GetAssertionRequest(
+                rpId,
+                clientDataHash,
+                listOf(
+                    PublicKeyCredentialDescriptor(
+                        PublicKeyCredentialType.PUBLIC_KEY,
+                        urlDecoder.decode(credentialId),
+                        null,
+                    ),
                 ),
-            ),
-            userPresent,
-            userVerified,
-            null,
-        )
+                userPresent,
+                userVerified,
+                null,
+            )
 
         val response = authenticator.getAssertion(request, AuthenticationEmulationOption())
 
@@ -185,30 +189,35 @@ class CeremonyFixture(
         residentKey: Boolean = false,
     ): RegistrationFixtureResult {
         val collectedClientData = collectedClientData(ClientDataType.WEBAUTHN_CREATE, challenge)
-        val clientDataBytes = CollectedClientDataConverter(ObjectConverter())
-            .convertToBytes(collectedClientData)
+        val clientDataBytes =
+            CollectedClientDataConverter(ObjectConverter())
+                .convertToBytes(collectedClientData)
         val clientDataHash = MessageDigestUtil.createSHA256().digest(clientDataBytes)
 
-        val request = MakeCredentialRequest(
-            clientDataHash,
-            PublicKeyCredentialRpEntity(rpId, "Fixture RP"),
-            PublicKeyCredentialUserEntity(userHandle, username, username),
-            residentKey,
-            userPresent,
-            userVerified,
-            listOf(
-                PublicKeyCredentialParameters(
-                    PublicKeyCredentialType.PUBLIC_KEY,
-                    COSEAlgorithmIdentifier.ES256,
+        val request =
+            MakeCredentialRequest(
+                clientDataHash,
+                PublicKeyCredentialRpEntity(rpId, "Fixture RP"),
+                PublicKeyCredentialUserEntity(userHandle, username, username),
+                residentKey,
+                userPresent,
+                userVerified,
+                listOf(
+                    PublicKeyCredentialParameters(
+                        PublicKeyCredentialType.PUBLIC_KEY,
+                        COSEAlgorithmIdentifier.ES256,
+                    ),
                 ),
-            ),
-        )
+            )
 
         val response = authenticator.makeCredential(request, RegistrationEmulationOption())
-        val attestationObject = AttestationObjectConverter(ObjectConverter())
-            .convertToBytes(response.attestationObject)
-        val credentialId = response.attestationObject!!
-            .authenticatorData.attestedCredentialData!!.credentialId
+        val attestationObject =
+            AttestationObjectConverter(ObjectConverter())
+                .convertToBytes(response.attestationObject)
+        val credentialId =
+            response.attestationObject!!
+                .authenticatorData.attestedCredentialData!!
+                .credentialId
 
         return RegistrationFixtureResult(
             credentialId = urlEncoder.encodeToString(credentialId),
@@ -218,13 +227,14 @@ class CeremonyFixture(
         )
     }
 
-    fun collectedClientData(type: ClientDataType, challenge: String) =
-        clientPlatform.createCollectedClientData(type, DefaultChallenge(urlDecoder.decode(challenge)))
+    fun collectedClientData(
+        type: ClientDataType,
+        challenge: String,
+    ) = clientPlatform.createCollectedClientData(type, DefaultChallenge(urlDecoder.decode(challenge)))
 
     fun newChallenge(): String = urlEncoder.encodeToString(randomBytes(32))
 
-    private fun randomBytes(size: Int): ByteArray =
-        ByteArray(size).also { java.security.SecureRandom().nextBytes(it) }
+    private fun randomBytes(size: Int): ByteArray = ByteArray(size).also { java.security.SecureRandom().nextBytes(it) }
 
     companion object {
         const val DEFAULT_RP_ID = "localhost"

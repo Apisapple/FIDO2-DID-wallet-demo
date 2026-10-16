@@ -1,12 +1,12 @@
 package com.raonsecure.demoserver.ceremony
 
+import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationContext
 import com.raonsecure.demoserver.base.entity.RpEntity
 import com.raonsecure.demoserver.base.entity.UserKeyEntity
-import com.raonsecure.demoserver.testsupport.CeremonyFixture
-import com.raonsecure.demoserver.testsupport.fakeUserKeyRepository
-import com.raonsecure.demoserver.testsupport.InMemoryChallengeStore
-import com.raonsecure.demoserver.authentication.challenge.PendingAuthenticationContext
 import com.raonsecure.demoserver.registration.challenge.PendingRegistrationContext
+import com.raonsecure.demoserver.testsupport.CeremonyFixture
+import com.raonsecure.demoserver.testsupport.InMemoryChallengeStore
+import com.raonsecure.demoserver.testsupport.fakeUserKeyRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -17,7 +17,6 @@ import java.util.Base64
 
 /** Covers the ceremony test doubles themselves, so a broken fixture is not mistaken for a broken server. */
 class CeremonyFixtureTest {
-
     private val urlDecoder = Base64.getUrlDecoder()
 
     @Test
@@ -82,10 +81,18 @@ class CeremonyFixtureTest {
         val rp = RpEntity(id = "localhost", name = "Fixture RP")
         val repository = fakeUserKeyRepository()
 
-        val saved = UserKeyEntity.builder()
-            .rpEntity(rp).userId("handle-1").username("alice").userDisplayName("Alice")
-            .aaguid("").credentialId("cred-1").publicKey("key").signatureAlgorithm(-7)
-            .build()
+        val saved =
+            UserKeyEntity
+                .builder()
+                .rpEntity(rp)
+                .userId("handle-1")
+                .username("alice")
+                .userDisplayName("Alice")
+                .aaguid("")
+                .credentialId("cred-1")
+                .publicKey("key")
+                .signatureAlgorithm(-7)
+                .build()
         repository.save(saved)
 
         assertEquals("alice", repository.findByCredentialId("cred-1")?.username)
@@ -102,9 +109,16 @@ class CeremonyFixtureTest {
 
         repeat(2) {
             repository.save(
-                UserKeyEntity.builder()
-                    .rpEntity(rp).userId("handle-1").username("alice").userDisplayName("Alice")
-                    .aaguid("").credentialId("cred-1").publicKey("key").signatureAlgorithm(-7)
+                UserKeyEntity
+                    .builder()
+                    .rpEntity(rp)
+                    .userId("handle-1")
+                    .username("alice")
+                    .userDisplayName("Alice")
+                    .aaguid("")
+                    .credentialId("cred-1")
+                    .publicKey("key")
+                    .signatureAlgorithm(-7)
                     .signCounter(it.toLong())
                     .build(),
             )

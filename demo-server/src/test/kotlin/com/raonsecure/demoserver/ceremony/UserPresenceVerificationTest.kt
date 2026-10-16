@@ -18,7 +18,6 @@ import org.junit.jupiter.api.assertThrows
  * UP-absent or UV-absent attestation cannot be produced. Only the accept cases are covered here.
  */
 class UserPresenceVerificationTest {
-
     // ----- registration -----
 
     @Test

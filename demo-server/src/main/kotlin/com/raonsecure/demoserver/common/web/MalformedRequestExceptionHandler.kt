@@ -15,16 +15,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
  */
 @RestControllerAdvice
 class MalformedRequestExceptionHandler {
-
     /**
      * The parser's own message names the failing class and field and carries the offending bytes,
      * so it is deliberately discarded in favour of a fixed message. A client cannot act on the
      * internal detail, and echoing it would expose the DTO's shape.
      */
     @ExceptionHandler(HttpMessageNotReadableException::class)
-    fun handleUnreadableBody(
-        e: HttpMessageNotReadableException,
-    ): ResponseEntity<WebAuthnVerificationResponse> =
+    fun handleUnreadableBody(e: HttpMessageNotReadableException): ResponseEntity<WebAuthnVerificationResponse> =
         ResponseEntity.badRequest().body(
             WebAuthnVerificationResponse(
                 success = false,

@@ -18,73 +18,79 @@ import org.springframework.test.web.servlet.post
 
 @WebMvcTest(controllers = [AuthenticationController::class])
 class AuthenticationControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
     @MockitoBean
     lateinit var authenticationService: AuthenticationService
 
-    private val sampleOptions = AuthenticationDataResponse(
-        challenge = "Y2hhbGxlbmdl",
-        rpId = "localhost",
-        allowCredentials = listOf(PublicKeyCredentialDescriptor(id = "cred123")),
-    )
+    private val sampleOptions =
+        AuthenticationDataResponse(
+            challenge = "Y2hhbGxlbmdl",
+            rpId = "localhost",
+            allowCredentials = listOf(PublicKeyCredentialDescriptor(id = "cred123")),
+        )
 
     @Test
     fun `options with valid username returns ok and challenge`() {
         whenever(authenticationService.createOptions(any())).thenReturn(sampleOptions)
 
-        mockMvc.post("/assertion/options") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"username":"testuser"}"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.status") { value("ok") }
-            jsonPath("$.options.challenge") { value("Y2hhbGxlbmdl") }
-            jsonPath("$.options.allowCredentials[0].id") { value("cred123") }
-        }
+        mockMvc
+            .post("/assertion/options") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"username":"testuser"}"""
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.status") { value("ok") }
+                jsonPath("$.options.challenge") { value("Y2hhbGxlbmdl") }
+                jsonPath("$.options.allowCredentials[0].id") { value("cred123") }
+            }
     }
 
     @Test
     fun `options without username returns ok for resident key flow`() {
-        val userlessOptions = AuthenticationDataResponse(
-            challenge = "Y2hhbGxlbmdl",
-            rpId = "localhost",
-            allowCredentials = null,
-        )
+        val userlessOptions =
+            AuthenticationDataResponse(
+                challenge = "Y2hhbGxlbmdl",
+                rpId = "localhost",
+                allowCredentials = null,
+            )
         whenever(authenticationService.createOptions(any())).thenReturn(userlessOptions)
 
-        mockMvc.post("/assertion/options") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{}"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.status") { value("ok") }
-            jsonPath("$.options.challenge") { value("Y2hhbGxlbmdl") }
-        }
+        mockMvc
+            .post("/assertion/options") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{}"""
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.status") { value("ok") }
+                jsonPath("$.options.challenge") { value("Y2hhbGxlbmdl") }
+            }
     }
 
     @Test
     fun `options for non-existent user returns failed status`() {
         doThrow(CredentialNotFoundException("No credentials registered for user: non_existent"))
-            .whenever(authenticationService).createOptions(any())
+            .whenever(authenticationService)
+            .createOptions(any())
 
-        mockMvc.post("/assertion/options") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"username":"non_existent"}"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.success") { value(false) }
-            jsonPath("$.message") { value("Credential not found: No credentials registered for user: non_existent") }
-        }
+        mockMvc
+            .post("/assertion/options") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"username":"non_existent"}"""
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(false) }
+                jsonPath("$.message") { value("Credential not found: No credentials registered for user: non_existent") }
+            }
     }
 
     @Test
     fun `result returns ok on successful verification`() {
-        mockMvc.post("/assertion/result") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{
+        mockMvc
+            .post("/assertion/result") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{
                 "id":"cred123","type":"public-key",
                 "response":{
                     "clientDataJSON":"abc",
@@ -92,21 +98,23 @@ class AuthenticationControllerTest {
                     "signature":"ghi"
                 }
             }"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.success") { value(true) }
-            jsonPath("$.message") { value("Authentication successful") }
-        }
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(true) }
+                jsonPath("$.message") { value("Authentication successful") }
+            }
     }
 
     @Test
     fun `result returns failed when challenge not found`() {
         doThrow(AuthenticationChallengeNotFoundException("abc"))
-            .whenever(authenticationService).verify(any())
+            .whenever(authenticationService)
+            .verify(any())
 
-        mockMvc.post("/assertion/result") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{
+        mockMvc
+            .post("/assertion/result") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{
                 "id":"cred123","type":"public-key",
                 "response":{
                     "clientDataJSON":"abc",
@@ -114,20 +122,22 @@ class AuthenticationControllerTest {
                     "signature":"ghi"
                 }
             }"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.success") { value(false) }
-        }
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(false) }
+            }
     }
 
     @Test
     fun `result returns failed on verification error`() {
         doThrow(AuthenticationVerificationException("invalid signature"))
-            .whenever(authenticationService).verify(any())
+            .whenever(authenticationService)
+            .verify(any())
 
-        mockMvc.post("/assertion/result") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{
+        mockMvc
+            .post("/assertion/result") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{
                 "id":"cred123","type":"public-key",
                 "response":{
                     "clientDataJSON":"abc",
@@ -135,20 +145,22 @@ class AuthenticationControllerTest {
                     "signature":"ghi"
                 }
             }"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.success") { value(false) }
-        }
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(false) }
+            }
     }
 
     @Test
     fun `result returns failed on unknown credential`() {
         doThrow(CredentialNotFoundException("cred123"))
-            .whenever(authenticationService).verify(any())
+            .whenever(authenticationService)
+            .verify(any())
 
-        mockMvc.post("/assertion/result") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{
+        mockMvc
+            .post("/assertion/result") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{
                 "id":"cred123","type":"public-key",
                 "response":{
                     "clientDataJSON":"abc",
@@ -156,9 +168,9 @@ class AuthenticationControllerTest {
                     "signature":"ghi"
                 }
             }"""
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.success") { value(false) }
-        }
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.success") { value(false) }
+            }
     }
 }

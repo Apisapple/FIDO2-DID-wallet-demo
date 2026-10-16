@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test
  * cannot be produced end to end.
  */
 class AttestationTypeTest {
-
     @Test
     fun `packed attestation with a certificate chain is recorded as basic`() {
         val harness = CeremonyHarness()

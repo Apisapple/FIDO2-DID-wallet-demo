@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @EnableConfigurationProperties(WebAuthnRpProperties::class)
 class WebAuthnConfig {
-
     @Bean
     fun webAuthnManager(): WebAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
 }

@@ -12,20 +12,25 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/assertion")
-class AuthenticationController(private val authenticationService: AuthenticationService) {
-
+class AuthenticationController(
+    private val authenticationService: AuthenticationService,
+) {
     @PostMapping("/options")
-    fun options(@RequestBody(required = false) request: AuthenticationOptionsRequest?): ResponseEntity<Any> {
+    fun options(
+        @RequestBody(required = false) request: AuthenticationOptionsRequest?,
+    ): ResponseEntity<Any> {
         val req = request ?: AuthenticationOptionsRequest()
         val options = authenticationService.createOptions(req)
         return ResponseEntity.ok(FidoAssertionOptionsResponse(status = "ok", options = options))
     }
 
     @PostMapping("/result")
-    fun result(@RequestBody result: PublicKeyCredentialGetResultDto): ResponseEntity<Any> {
+    fun result(
+        @RequestBody result: PublicKeyCredentialGetResultDto,
+    ): ResponseEntity<Any> {
         authenticationService.verify(result)
         return ResponseEntity.ok(
-            WebAuthnVerificationResponse(success = true, message = "Authentication successful")
+            WebAuthnVerificationResponse(success = true, message = "Authentication successful"),
         )
     }
 }

@@ -11,7 +11,6 @@ class RpSeeder(
     private val rpRepository: RpRepository,
     private val rpProperties: WebAuthnRpProperties,
 ) : ApplicationRunner {
-
     override fun run(args: ApplicationArguments) {
         if (!rpRepository.existsById(rpProperties.id)) {
             rpRepository.save(RpEntity(id = rpProperties.id, name = rpProperties.name))
